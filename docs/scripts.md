@@ -55,6 +55,7 @@ One-line description of every script in the repo. Descriptions are pulled from e
 | `backup-restore-keepassxc.sh` | Backs up/restores the last-opened KeePassXC database |
 | `backup-restore-plank.sh` | Dumps/restores Plank dock settings via dconf |
 | `backup-restore-trackpoint_touchpad_sensitivity.sh` | Dumps/restores touchpad, TrackPoint, and mouse peripheral settings via dconf |
+| `backup-wifi.sh` | Backs up saved WiFi network names and PSKs from NetworkManager (backup-only, not auto-restored) |
 
 ## Theme scripts
 

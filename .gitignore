@@ -1,0 +1,24 @@
+git.conf
+
+# Generated backup/inventory output (theme.conf, dconf dumps, config
+# backups, package_inventory.sh reports, etc.) -- personal machine state,
+# not something to commit. Ignore the contents but keep the folder itself
+# tracked (via backup/.gitkeep) so it exists on a fresh clone.
+backup/*
+!backup/.gitkeep
+
+# Paid license key -- personal, shouldn't be committed
+files/FileBot_License_*.psm
+
+# Paywalled/copyrighted wallpaper pack -- not ours to redistribute
+files/vladstudio_1366x768.zip
+
+# Third-party cheat sheets (Atlassian, GitHub Education, etc.) -- not ours
+# to redistribute
+notes/git cheatsheet/
+
+# Generated output from the contrib/ listing scripts -- personal machine
+# state, not something to commit.
+contrib/filelist.txt
+contrib/other-file-list.txt
+contrib/output.txt

@@ -1,0 +1,63 @@
+https://github.com/muesli/duf
+https://ubuntuhandbook.org/index.php/2021/05/install-chromium-browser-ppa-ubuntu-20-04/
+https://flatpak.org/setup/Ubuntu
+flatpak install flathub org.chromium.Chromium
+
+Plank themes directory: /home/william/.local/share/plank/themes/
+
+
+https://bgstack15.wordpress.com/2017/10/04/dconf-save-and-load-from-file/
+https://www.linuxuprising.com/2019/12/a-guide-to-using-plank-dock-on-linux.html
+https://discourse.ubuntubudgie.org/t/plank-configuration-file/1418/4
+https://vitux.com/how-to-use-plank-a-simple-and-customizable-dock-on-ubuntu/
+https://linuxize.com/post/how-to-install-kvm-on-ubuntu-20-04/
+https://www.debugpoint.com/install-use-gnome-boxes/
+
+https://ubunlog.com/en/webapp-manager-crea-accesos-directos-a-paginas-web/
+https://linuxhint.com/appimage-launcher/
+
+Drill Search:
+https://github.com/yatima1460/Drill/releases/tag/v566
+https://www.linuxuprising.com/2019/05/drill-new-desktop-file-search-utility.html
+
+Plank: 
+https://vitux.com/how-to-use-plank-a-simple-and-customizable-dock-on-ubuntu/
+
+set superkey(windows) to open menu: 
+https://askubuntu.com/questions/1049009/windows-key-not-opening-start-menu-on-ubuntu-studio-18-04
+
+https://github.com/flyingrhinonz/nccm
+
+https://www.xmodulo.com/how-to-disable-touchpad-on-debian-ubuntu-desktop.html
+https://linuxhint.com/disable-screen-lock-ubuntu/
+
+https://geekrewind.com/how-to-mount-box-on-ubuntu/
+https://geekrewind.com/how-to-setup-self-signed-ssl-tls-on-mysql/
+https://geekrewind.com/how-to-setup-fail2ban-on-ubuntu/
+https://geekrewind.com/how-to-install-configserver-security-firewall-on-ubuntu/
+https://geekrewind.com/how-to-install-jenkins-on-ubuntu-linux/
+https://geekrewind.com/how-to-reset-mysql-or-mariadb-root-password/
+https://geekrewind.com/how-to-install-cups-print-server-on-ubuntu-linux/
+
+https://github.com/librenms/docker
+
+https://linuxhint.com/install-free-file-sync-software-ubuntu/
+
+https://github.com/eylles/plymouth-preview
+
+
+
+
+
+
+
+Menu: mouse and touchpd
+Turn off touchpad and pointer
+
+MENU: Screensaver --> Turn off screensaver
+
+Mouse and Trackpad: Synaptics --> Turn off
+
+https://itsfoss.com/y-ppa-manager/
+
+

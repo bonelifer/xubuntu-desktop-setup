@@ -1,0 +1,154 @@
+##Add current user to be password-less sudo
+## https://askubuntu.com/questions/334318/sudoers-file-enable-nopasswd-for-user-all-commands
+## https://linuxtect.com/how-to-run-sudo-command-without-password-with-nopasswd/
+echo "$USER ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee "/etc/sudoers.d/dont-prompt-$USER-for-sudo-password"
+
+
+# Enable multiverse and other useful repositories
+echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs) universe" | sudo tee -a /etc/apt/sources.list
+echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs) multiverse" | sudo tee -a /etc/apt/sources.list
+echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs)-updates multiverse" | sudo tee -a /etc/apt/sources.list
+echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs)-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+echo "deb http://security.ubuntu.com/ubuntu/ $(lsb_release -cs)-security multiverse" | sudo tee -a /etc/apt/sources.list
+
+# Enable Canonical's partner repository
+echo "deb http://archive.canonical.com/ubuntu $(lsb_release -cs) partner" | sudo tee -a /etc/apt/sources.list
+
+## Add repositories
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+echo "deb [arch=amd64] https://mirror.mwt.me/ghd/deb/ any main" | sudo tee /etc/apt/sources.list.d/packagecloud-shiftkey-desktop.list
+echo "ppa:apt-fast/stable" | tee /etc/apt/sources.list.d/apt-fast.list
+echo "ppa:libreoffice/ppa" | tee /etc/apt/sources.list.d/libreoffice.list
+echo "ppa:savoury1/ffmpeg4" | tee /etc/apt/sources.list.d/ffmpeg4.list
+echo "ppa:savoury1/graphics" | tee /etc/apt/sources.list.d/graphics.list
+echo "ppa:savoury1/multimedia" | tee /etc/apt/sources.list.d/multimedia.list
+echo "ppa:ubuntuhandbook1/puddletag" | tee /etc/apt/sources.list.d/puddletag.list
+echo "ppa:ufleisch/kid3" | tee /etc/apt/sources.list.d/kid3.list
+echo "ppa:ondrej/php" | tee /etc/apt/sources.list.d/php8.list
+wget -qO - https://dl.winehq.org/wine-builds/winehq.key | sudo apt-key add -
+echo "deb https://dl.winehq.org/wine-builds/ubuntu/ jammy main" | tee /etc/apt/sources.list.d/wine.list
+echo "ppa:unit193/encryption" | tee /etc/apt/sources.list.d/veracrypt.list
+echo "ppa:atareao/atareao" | tee /etc/apt/sources.list.d/gotify-indicator.list
+echo "ppa:giuspen/ppa" | tee /etc/apt/sources.list.d/cherrytree.list
+echo "ppa:yktooo/ppa" | tee /etc/apt/sources.list.d/pulseaudio-indicator-switcher.list
+echo "ppa:git-core/ppa" | tee /etc/apt/sources.list.d/git-core.list
+echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" | tee /etc/apt/sources.list.d/cran35.list
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+wget -q http://www.webmin.com/jcameron-key.asc -O- | sudo apt-key add -
+echo "deb [arch=amd64] http://download.webmin.com/download/repository sarge contrib" | sudo tee /etc/apt/sources.list.d/webmin.list
+wget -qO - https://download.opensuse.org/repositories/home:/npreining:/debian-ubuntu-onedrive/xUbuntu_20.04/Release.key | sudo apt-key add -
+echo 'deb https://download.opensuse.org/repositories/home:/npreining:/debian-ubuntu-onedrive/Ubuntu_22.04/ ./' | sudo tee /etc/apt/sources.list.d/onedrive.list
+wget -q https://download.opensuse.org/repositories/home:/Ximi1970/xUbuntu_20.04/Release.key
+sudo apt-key add Release.key
+echo "deb https://download.opensuse.org/repositories/home:/Ximi1970:/Mozilla:/Add-ons/xUbuntu_20.04 ./" | sudo tee /etc/apt/sources.list.d/systray-x.list
+echo "deb [trusted=yes] https://apt.fury.io/lefterisgar/ * *" > \
+/etc/apt/sources.list.d/caprine.list
+echo "deb https://ppa.launchpadcontent.net/nodejs/ppa/ubuntu jammy main" | sudo tee /etc/apt/sources.list.d/node-ppa.list
+echo "deb-src https://ppa.launchpadcontent.net/nodejs/ppa/ubuntu jammy main" | sudo tee -a /etc/apt/sources.list.d/node-ppa.list
+echo "deb https://deb.libreoffice.org/ppa/ppa1~16.04/ubuntu jammy main" | sudo tee /etc/apt/sources.list.d/libreoffice-ppa.list
+echo "deb-src https://deb.libreoffice.org/ppa/ppa1~16.04/ubuntu jammy main" | sudo tee -a /etc/apt/sources.list.d/libreoffice-ppa.list
+# sudo add-apt-repository -y ppa:tatokis/alarm-clock-applet
+echo "deb http://ppa.launchpad.net/tatokis/alarm-clock-applet/ubuntu/ $(lsb_release -cs) main"
+# Import Spotify public key and Add Spotify repository to sources list
+curl -sS https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
+echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+
+# Refresh package list and perform full upgrade
+sudo apt update && sudo apt -y full-upgrade
+
+# Install packages with all recommended dependencies
+sudo apt install --install-recommends \
+  acpi aisleriot alarm-clock-applet apache2-utils apt-fast apt-transport-https \
+  aria2 atfs audacity autoconf automake bison brasero build-essential caprine \
+  cargo cheese cherrytree clementine cpu-x curl davfs2 deluge filezilla ffmpeg \
+  font-manager g++ gdebi-core gettext git github-desktop gnome-disk-utility \
+  gnome-software-plugin-flatpak gnupg gnupg2 gobjc gfortran gparted gpodder \
+  gstreamer1.0-plugins-bad* gstreamer1.0-plugins-ugly guvcview hardinfo htop \
+  hexchat indicator-sound-switcher kid3-qt krita libreoffice libffi-dev \
+  libgdbm-dev libgmp-dev libgranite-dev libncurses5-dev libpackagekit-glib2-dev \
+  libreadline-dev libsdl2-dev libssl-dev libtool libunity-dev libyaml-dev \
+  meson mc msmtp mpv net-tools ninja-build notification-daemon onedrive picard \
+  preload puddletag pv putty python3-pip python3-venv p7zip-full p7zip-rar \
+  r-base ruby-full sqlite3 sqlitebrowser spotify-client software-properties-common \
+  synaptic systray-x-minimal tilda timeshift ubuntu-restricted-addons \
+  ubuntu-restricted-extras unzip valac variety veracrypt vlc wget winehq-stable \
+  winff yarn cargo libssl-dev pkg-config
+
+# Check for Jammy or later and install webp support
+if [ "$(lsb_release -cs)" \> "jammy" ]; then
+    sudo apt install -y webp-pixbuf-loader
+else
+    echo "Not Jammy or later, so no webp-pixbuf-loader"
+fi
+
+# Install php8.2 and common plugins
+sudo apt install php8.2-fpm php8.2-common php8.2-mysql php8.2-gmp php8.2-curl php8.2-mbstring php8.2-gd php8.2-xml php8.2-readline php8.2-cli php8.2-zip php8.2-intl php8.2-bcmath php8.2-bz2 php8.2-cgi php8.2-pgsql
+sudo systemctl restart php8.2-fpm.service
+
+#sudo apt install --install-recommends linux-generic-hwe-22.04
+
+# Install DVD integration
+sudo apt install -y libdvd-pkg libdvdread7 
+sudo dpkg-reconfigure libdvd-pkg
+
+# Automatically accept the EULA for ttf-mscorefonts-installer and install it
+echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | sudo debconf-set-selections
+sudo apt-get install -y ttf-mscorefonts-installer
+
+# Install the topgrade tool using Cargo.
+cargo install topgrade
+
+# Add the Cargo bin directory to the PATH environment variable so that topgrade can be executed from any directory.
+export PATH=$PATH:/home/username/.cargo/bin
+
+# Download and execute the NodeSource installation script to configure and install the latest Node.js version.
+curl -sL https://deb.nodesource.com/setup_current.x | sudo -E bash -
+
+# Purge useless packages
+sudo apt purge mousepad emacs-* vim vim-runtime emacs emacs-common emacs-gtk transmission
+
+# SNAP PACKAGE SECTION
+sudo snap refresh
+
+# SNAPS
+sudo snap install discord p7zip-desktop authy code go castersoundboard
+sudo snap install node --channel=14/stable --classic
+sudo snap install ubuntu-make --classic
+sudo snap install go --classic
+sudo snap install --classic code
+sudo snap install chromium
+# END SNAP PACKAGE SECTION
+
+
+# FLATPAK PACKAGE SECTION
+# Install flatpak support for GNOME Software
+sudo apt install gnome-software-plugin-flatpak
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+# Install various flatpak applications
+flatpak install flathub io.github.Pithos fr.handbrake.ghb com.github.alexkdeveloper.recorder org.gnome.EasyTAG org.mpdevil.mpdevil org.flameshot.Flameshot org.freac.freac
+flatpak install https://dl.flathub.org/repo/appstream/com.github.finefindus.eyedropper.flatpakref
+flatpak install --user flathub org.keepassxc.KeePassXC
+flatpak override --user org.keepassxc.KeePassXC raw-usb
+flatpak install flathub io.github.Pithos
+flatpak install fr.handbrake.ghb
+flatpak install flathub com.github.alexkdeveloper.recorder
+flatpak install flathub org.gnome.EasyTAG
+flatpak install flathub org.mpdevil.mpdevil
+flatpak install flathub org.flameshot.Flameshot
+flatpak install flatseal
+flatpak install flathub org.telegram.desktop
+# END FLATPAK PACKAGE SECTION
+
+# Add GRUB Customizer repository and Install GRUB Customizer
+sudo add-apt-repository ppa:danielrichter2007/grub-customizer -y
+sudo apt update
+sudo apt install grub-customizer -y
+
+
+# https://itsfoss.com/install-git-ubuntu/
+
+
+# implement: https://blog.ostermiller.org/ubuntu-usb-audio/
+

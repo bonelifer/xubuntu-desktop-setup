@@ -1,0 +1,55 @@
+Certainly! Here's a combined guide for setting up VirtualBox VMs to use Bridged Networking by default:
+
+### Setting Up VirtualBox VMs with Bridged Networking
+
+#### 1. Create a VM Template with Bridged Networking:
+
+   - Open VirtualBox and click on "New" to create a new VM.
+   - Follow the wizard to configure the basic settings for your VM (name, type, version).
+   - Allocate memory to the VM as needed.
+   - In the "Hard disk" section, either create a new virtual hard disk or use an existing one.
+   - In the "File Location and Size" section, configure the hard disk settings.
+   - Click "Create" to create the VM.
+
+#### 2. Configure Bridged Networking for the VM:
+
+   - Select the newly created VM and click on "Settings."
+   - In the "Settings" window, go to the "Network" tab.
+   - Under "Attached to," select "Bridged Adapter" from the drop-down menu.
+   - Choose the host machine's network interface from the "Name" drop-down menu.
+   - Click "OK" to save the settings.
+
+#### 3. Install and Configure the Guest OS:
+
+   - Start the VM and install the guest operating system.
+   - Set up any additional software or configurations you need.
+   - Shut down the VM when you're finished.
+
+#### 4. Export the VM as an Appliance:
+
+   - With the VM powered off, select it in the VirtualBox Manager.
+   - Go to `File > Export Appliance` and follow the wizard to create an OVA file.
+   - This OVA file serves as your VM template.
+
+#### 5. Import the VM Template for New VMs:
+
+   - When you want to create a new VM with Bridged Networking, go to `File > Import Appliance`.
+   - Select the OVA file you exported as the template.
+   - Follow the wizard to import the appliance and create a new VM.
+
+#### 6. Customize Individual VMs (Optional):
+
+   - After importing the VM template, you can customize individual VMs as needed.
+   - Adjust settings such as memory, CPU, and storage according to your requirements.
+
+#### 7. Start VMs and Obtain Unique IP Addresses:
+
+   - Start the VMs based on the template.
+   - The VMs will use Bridged Networking, and each will obtain a unique IP address from your router's DHCP server.
+
+#### 8. Access VMs from the Host or Other Devices:
+
+   - Find the IP addresses of the VMs by checking the network settings within each VM or using tools like `ipconfig` (for Windows) or `ifconfig` (for Linux).
+   - Access the VMs from the host or other devices on the local network using their individual IP addresses.
+
+This guide combines the steps for creating a VM template with Bridged Networking and using that template to create new VMs. The VMs created from the template will automatically use Bridged Networking, allowing them to obtain unique IP addresses on your local network.

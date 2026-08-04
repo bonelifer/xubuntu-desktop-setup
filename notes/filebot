@@ -1,0 +1,55 @@
+filebot --license "./FileBot_License_XXXXXXXXXX.psm"
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/media/USERNAME/NewData/SPOTIFY/ORGANIZED/{artist}/{album}/{pi.pad(2)}.{pn} - {artist} - {t}
+
+TV
+{["T:", "Y:"].collect{ drive -> def a=n; new File('D:/names.csv').splitEachLine(';'){if (n==it[0]) a=it[1]}; return new File(drive+"/Videos/TV/", a)}.sort{ a,b -> a.exists() <=> b.exists() ?: a.diskSpace <=> b.diskSpace }.last()}/{episode}
+
+
+
+
+{["T:", "Y:"].collect{ drive -> def a=n; new File('Y:/incoming/scripts/names.csv').splitEachLine(';'){if (n==it[0]) a=it[1]}; return new File(drive+"/Videos/TV/", a)}.sort{ a,b -> a.exists() <=> b.exists() ?: a.diskSpace <=> b.diskSpace }.last()}/{episode.special ? "Season "+s.pad(2) : "Season "+s.pad(2)}/{def a; new File('Y:/incoming/scripts/names.csv').splitEachLine(';'){ if (n == it[0]) a = it[1]}; a ?: n.upperInitial().replaceTrailingBrackets()} - [{episode.special ? "00x"+special.pad(2) : s.pad(2) + "x" + e.pad(2)}] - {t}f
+
+
+
+Current TV:
+{["/media/USERNAME/NewData/Videos/"].collect{ drive -> def a=n; new File('/media/USERNAME/NewData/Videos/names.csv').splitEachLine(';'){if (n==it[0]) a=it[1]}; return new File(drive+"/TV/", a)}.sort{ a,b -> a.exists() <=> b.exists() ?: a.diskSpace <=> b.diskSpace }.last()}/{episode.special ? "Season "+s.pad(2) : "Season "+s.pad(2)}/{def a; new File('/media/USERNAME/NewData/Videos/names.csv').splitEachLine(';'){ if (n == it[0]) a = it[1]}; a ?: n.upperInitial().replaceTrailingBrackets()} - [{episode.special ? "00x"+special.pad(2) : s.pad(2) + "x" + e.pad(2)}] - {t}
+
+
+MUSIC
+filebot -script 'fn:amc' '/media/USERNAME/NewData/SPOTIFY/MOCK/Work/' --output '/media/USERNAME/NewData/MOCK/CLEAN/' --action move -non-strict  --apply import --conflict auto --def 'music=y' 'unsorted=y' 'artwork=y' 'clean=y' 'skipExtract=y' --apply refresh --log all --log-file music.log --def excludeList=music.txt  --def musicFormat="/media/USERNAME/NewData/SPOTIFY/MOCK/CLEAN/{artist}/{album}/{pi.pad(2)} - {artist} - {t}"
+
+
+{ny}/{ny}{' CD'+pi}{subt}
+
+
+
+{["/media/USERNAME/NewData/Videos/"].collect{ drive -> def a=n; new File('/media/USERNAME/NewData/Videos/names.csv').splitEachLine(';'){if (n==it[0]) a=it[1]}; return new File(drive+"/MOVIES/", a)}.sort{ a,b -> a.exists() <=> b.exists() ?: a.diskSpace <=> b.diskSpace }.last()}/{ny}{' CD'+pi}{subt}
+
+
+
+
+
+
+ALTERNATE2B:
+/media/USERNAME/OracleHarbor/LidarMusic/CLEAN/{albumartist}/{album} ({y}){media.'part/position_total' == null ? null : '/CD ' + media.'part/position'}/{media.'part/position_total' == null ? null : media.'part/position' + "."}{ pi.pad(2) } - {artist} - {t}
+
+ALTRNATE2:
+/media/USERNAME/NewData/Music/MP3-OLD/{albumartist}/{album} ({y}){media.'part/position_total' == null ? null : '/CD ' + media.'part/position'}/{media.'part/position_total' == null ? null : media.'part/position' + "."}{ pi.pad(2) } - {artist} - {t}
+
+
+ALTERNATE3:
+./{artist}/{album}{media.'part/position_total' == null ? null : '/CD ' + media.'part/position'}/{media.'part/position_total' == null ? null : media.'part/position' + "."}{ pi.pad(2) } - {artist} - {t}
+
+ORGANIZED:
+/media/USERNAME/NewData/Music/SPOTIFY/ORGANIZED/{artist}/{album}/{pi} - {artist} - {t}
+
+
+HOLIDAY:
+/media/USERNAME/NewData/Music/CHRISTMAS/{albumartist}/{album}{media.'part/position_total' == null ? null : '/CD ' + media.'part/position'}/{media.'part/position_total' == null ? null : media.'part/position' + "."}{ pi.pad(2) }  - {artist} - {t}
+
+
+COMEDY:
+/home/USERNAME/CODE/Remodora/comedy/new/{artist}/{album}/{artist} - {t}

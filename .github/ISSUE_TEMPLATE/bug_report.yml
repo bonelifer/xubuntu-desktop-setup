@@ -1,0 +1,56 @@
+name: Bug report
+description: Report a problem with an install/backup/restore script
+labels: ["bug"]
+body:
+  - type: input
+    id: script
+    attributes:
+      label: Script or component
+      description: Which script/module is affected? (e.g. install-docker.sh, packages.conf, perform_restore.sh)
+      placeholder: install-docker.sh
+    validations:
+      required: true
+
+  - type: input
+    id: os-version
+    attributes:
+      label: Ubuntu/Xubuntu version
+      description: Output of `lsb_release -ds`
+      placeholder: Ubuntu 22.04.5 LTS
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Exact command(s) run, including any flags (e.g. `--with-webmin`)
+      placeholder: |
+        1. ./install-main.sh --with-webmin
+        2. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior / log output
+      description: Paste relevant terminal output. Redact anything sensitive (paths with your username, license keys, etc.)
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Anything else that might help (hardware, prior modifications to packages.conf, etc.)
+    validations:
+      required: false

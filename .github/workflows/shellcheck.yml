@@ -1,0 +1,26 @@
+name: ShellCheck
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run ShellCheck
+        run: |
+          set -euo pipefail
+          # *.sh scripts, plus non-.sh files meant to be sourced as bash
+          # (they self-declare with a `# shellcheck shell=bash` directive).
+          # notes/ is a scratch/archive folder, not part of the shipped
+          # install/backup toolkit, so it's excluded from the lint gate.
+          find . -path ./notes -prune -o -name '*.sh' -print0 > /tmp/shellcheck-targets
+          grep -rlZ '^# shellcheck shell=bash' --include='*.conf' --include='*.example' . \
+            | grep -zv '^\./notes/' >> /tmp/shellcheck-targets || true
+          # warning+ only: style/info nits on legacy scripts aren't worth
+          # blocking CI over, but real correctness issues (unquoted vars,
+          # masked return values, etc.) still fail the build.
+          xargs -0 shellcheck -x -S warning < /tmp/shellcheck-targets

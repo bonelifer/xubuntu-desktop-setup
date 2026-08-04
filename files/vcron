@@ -1,0 +1,1587 @@
+#!/bin/sh
+# the next line restarts using wish \
+exec wish "$0" "$@"
+#########################################################
+# Visual cron interface
+#
+# Daniel Roche, <daniel.roche@bigfoot.com>
+#
+# with many thanks from the contributors :
+#
+#  - Laurent Deruaz <laurent.deruaz@tms.thomson-csf.com>
+#     for the */n syntax management
+#     for displaying the at program in the list
+#
+#########################################################
+
+if { $tk_version < "8.0" } {
+    puts "vcron need tcl/tk version 8.0 mininum , aborting !"
+    exit
+}
+
+set vcronlib [ file join / usr local lib vcron]
+if ![ file isdirectory $vcronlib ] {
+ set vcronlib [ file join / usr lib vcron ]
+ if ![ file isdirectory $vcronlib ] {
+  set vcronlib [ pwd ]
+  if ![ file isdirectory $vcronlib/doc ] {
+   puts "cannot find application directory !"
+   exit 1
+  }
+ }
+}
+
+#########################################################
+#
+# global variable and settings
+#
+#########################################################
+
+variable Settings
+set Settings(MainColor) "gray66"
+set Settings(EntryColor) "gray72"
+set Settings(HighColor) "#000080"
+set Settings(DateColor) "#dbc9b6"
+set Settings(SelColor1) "#ffc000"
+set Settings(SelColor2) "steelblue4"
+set Settings(SelColor3) "white"
+set Settings(MainFont) "-*-helvetica-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
+set Settings(HighFont) "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
+
+variable Messages
+variable Config
+
+variable cronenv
+
+variable tab_minutes
+variable tab_heures
+variable tab_joursdumois
+variable tab_mois
+variable tab_joursdesemaine
+
+variable at_minute
+variable at_heure
+variable at_jour
+variable at_mois
+variable at_annee
+
+variable each_minute
+variable each_heure
+variable each_joursdumois
+variable each_mois
+
+variable to_exec
+
+variable st_cremod
+variable st_cronat
+
+variable currentdate
+
+option add *highlightThickness 0
+option add *font $Settings(MainFont)
+option add *wrapLength 600
+
+#set tk_strictMotif 1
+tk_setPalette $Settings(MainColor)
+
+#########################################################
+#
+# other files
+#
+#########################################################
+
+source $vcronlib/mscroll.tcl
+mscroll Text
+mscroll Listbox
+mscroll Canvas
+
+#########################################################
+#
+# messages
+#
+#########################################################
+
+proc InitDefaultMessages {} {
+    global Messages
+
+    set Messages(titre) "Visual Cron"
+    set Messages(info) "Information"
+    set Messages(apropos) "About"
+    set Messages(quitter) "Quit"
+    set Messages(opers) "Operations"
+    set Messages(creer) "Add"
+    set Messages(modifier) "Modify / View"
+    set Messages(enlever) "Delete"
+    set Messages(rescan) "Rescan"
+    set Messages(par) "by"
+    set Messages(mconf) "Configuration"
+    set Messages(setlang) "Set language"
+    set Messages(lang)  "Language :"
+    set Messages(setcronenv) "Set cron environment"
+    set Messages(licence) "Copying"
+    set Messages(crontitre) "Regular programming (cron)"
+    set Messages(attitre) "One shot programming (at)"
+    set Messages(prgtitre) "Programming"
+    set Messages(msgok) " OK "
+    set Messages(cancel) "Cancel"
+    set Messages(hmi) "Minutes"
+    set Messages(hhh) "Hours"
+    set Messages(hjm) "Days"
+    set Messages(hmo) "Months"
+    set Messages(hjs) "Weekday"
+    set Messages(han) "Year"
+    set Messages(exec) "Program to execute :"
+    set Messages(parc) "Browse"
+    set Messages(prgtype) "What kind of programming do you want ?"
+    set Messages(tregul) "regular (cron)"
+    set Messages(toneshot) "one shot (at)"
+    set Messages(helps) "Help"
+    set Messages(manual) "Manual"
+    set Messages(htitle) "On Line Help"
+    set Messages(cronenv) "Cron Environment :"
+    set Messages(sample) "Samples"
+    set Messages(deltitle) "Really delete ?"
+    set Messages(confdel) "Do you really want to delete :"
+    set Messages(smoi) "dumb January February March April May June July August September October November December"
+    set Messages(sjour) "sunday monday tuesday wednesday thursday friday saturday"
+    set Messages(any) "Any (*)"
+
+}
+
+proc ReadMessages {} {
+    global vcronlib Messages
+
+    InitDefaultMessages
+
+    set Lang [GetLang]
+
+    set flng [file join $vcronlib "message.$Lang" ]
+    if [ file isfile $flng] {
+	set fid [ open $flng r]
+	set len [gets $fid line]
+	while {! [eof $fid]} {
+	    if [ expr $len != 0 ] {
+		if {! [regexp "^\[#!\]" $line 0] } {
+		    set indx [string first ":" $line]
+		    if [ expr $indx != -1 ] {
+			set varname [ string range $line 0 [ expr $indx -1]]
+			set message [ string range $line [ expr $indx +1] end ]
+			set message [ string trimleft $message " " ]
+			if { $varname == "__font__" } {
+			    option add *font $message
+			} else {
+			    eval set Messages($varname) \"$message\"
+			}
+		    }
+		}
+	    }
+	    set len [gets $fid line]
+	}
+	close $fid
+    }
+}
+
+
+#########################################################
+#
+# pixmap creation
+#
+#########################################################
+
+image create photo moi -data "\
+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\
+ioO6y+RmbxvCgpEQAAA7"
+
+image create photo logo -data ""
+
+#########################################################
+#
+# widget creation
+#
+#########################################################
+
+proc CreateMainWidgets {} {
+    global Messages Settings
+
+    wm title . $Messages(titre)
+    . configure -width 1000 -height 500
+
+    menu .mbar -tearoff 0 -type menubar
+
+    .mbar add cascade -menu .mbar.oper -label $Messages(opers)
+    menu .mbar.oper -tearoff 0
+
+    .mbar.oper add command -label $Messages(creer) -command "Ajouter"
+    .mbar.oper add command -label $Messages(modifier) -command "Modifier"
+    .mbar.oper add command -label $Messages(enlever) -command "Enlever"
+    .mbar.oper add command -label $Messages(rescan) -command "GetCurrentState"
+    .mbar.oper add separator
+    .mbar.oper add command -label $Messages(quitter) -command "exit"
+
+    .mbar add cascade -menu .mbar.config -label $Messages(mconf)
+    menu .mbar.config -tearoff 0
+
+    .mbar.config add command -label $Messages(setcronenv) -command "SetCronEnv"
+    .mbar.config add separator
+    .mbar.config add command -label $Messages(setlang) -command "SetLang"
+
+    .mbar add cascade -menu .mbar.help -label $Messages(helps)
+    menu .mbar.help -tearoff 0
+
+    .mbar.help add command -label $Messages(apropos) -command "Apropos"
+    .mbar.help add separator
+    .mbar.help add command -label $Messages(manual) -command "HelpMan  $Messages(manual) manual"
+    .mbar.help add separator
+    .mbar.help add command -label $Messages(licence) -command "HelpMan $Messages(licence) GPL"
+
+    . configure -menu .mbar
+
+    frame .fram0 -relief flat -borderwidth 2
+    frame .fram1 -relief flat -borderwidth 2
+    frame .fram2 -relief flat -borderwidth 2
+    frame .fram3 -relief groove -borderwidth 2
+
+    set f0y 30
+    set f3y 40
+    set f12y [expr ($f0y + $f3y) / 2]
+    place .fram0 -x 0 -relwidth 1.0 -rely 0.0 -height $f0y
+    place .fram1 -x 0 -relwidth 1.0 -y $f0y -relheight 0.5 -height [ expr - $f12y ]
+    place .fram2 -x 0 -relwidth 1.0 -rely 0.5 -y [ expr $f0y - $f12y ] \
+	-relheight 0.5 -height [ expr - $f12y ]
+    place .fram3 -x 0 -relwidth 1.0 -rely 1.0 -y [ expr - $f3y ] -height $f3y
+    unset f0y f3y f12y
+
+    label .fram0.icon -image logo
+    label .fram0.date -textvariable currentdate -relief sunken -bg $Settings(DateColor)
+    pack .fram0.icon -side left
+    pack .fram0.date -side right
+
+    label .fram1.head1 -text "$Messages(crontitre)" -foreground $Settings(HighColor) \
+	-anchor nw -font $Settings(HighFont)
+    frame .fram1.frm10 -relief flat -borderwidth 0
+
+    pack .fram1.head1 -side top -fill both -anchor nw
+    pack .fram1.frm10 -side bottom -expand 1 -fill both
+
+    set scw 16
+    scrollbar .fram1.frm10.sb1 -command ".fram1.frm10.lst1 yview" -highlightthickness 0
+    listbox .fram1.frm10.lst1 -selectmode single -yscroll ".fram1.frm10.sb1 set" \
+	-highlightthickness 0 -background $Settings(EntryColor) \
+	-selectbackground  $Settings(SelColor2) -selectforeground  $Settings(SelColor3)
+    place .fram1.frm10.lst1 -x 4 -relwidth 1.0 -width [expr -$scw - 10 ] \
+	-y 4  -relheight 1.0 -height -8
+    place .fram1.frm10.sb1 -relx 1.0 -x [expr -$scw - 4 ] -width $scw -y 4  \
+	-relheight 1.0 -height -8
+
+    label .fram2.head2 -text "$Messages(attitre)" -foreground $Settings(HighColor) \
+	-anchor nw -font $Settings(HighFont)
+    frame .fram2.frm20 -relief flat -borderwidth 0
+
+    pack .fram2.head2 -side top -fill both -anchor nw
+    pack .fram2.frm20 -side bottom -expand 1 -fill both
+
+    set scw 16
+    scrollbar .fram2.frm20.sb2 -command ".fram2.frm20.lst2 yview" -highlightthickness 0
+    listbox .fram2.frm20.lst2 -selectmode single -yscroll ".fram2.frm20.sb2 set" \
+	-highlightthickness 0 -background $Settings(EntryColor) \
+	-selectbackground  $Settings(SelColor2) -selectforeground  $Settings(SelColor3)
+    place .fram2.frm20.lst2 -x 4 -relwidth 1.0 -width [expr -$scw - 10 ] \
+	-y 4  -relheight 1.0 -height -8
+    place .fram2.frm20.sb2 -relx 1.0 -x [expr -$scw - 4 ] -width $scw -y 4  \
+	-relheight 1.0 -height -8
+    unset scw
+
+    button .fram3.cre -text $Messages(creer) -highlightthickness 0 -command "Ajouter"
+    button .fram3.mod -text $Messages(modifier) -highlightthickness 0 -command "Modifier"
+    button .fram3.del -text $Messages(enlever) -highlightthickness 0 -command "Enlever"
+    button .fram3.scn -text $Messages(rescan) -highlightthickness 0 \
+	-command "GetCurrentState"
+    button .fram3.quit -text $Messages(quitter) -highlightthickness 0 -command "exit"
+    pack .fram3.cre .fram3.mod .fram3.del .fram3.scn .fram3.quit -side left -padx 7
+
+}
+
+#########################################################
+#
+# fonctions
+#
+#########################################################
+
+proc Apropos {} {
+ global Messages
+
+ toplevel .apropos
+ label .apropos.ver -text "$Messages(titre) version 2.3.1" -font 12x24
+ label .apropos.by -text $Messages(par)
+ label .apropos.ico -image moi
+ label .apropos.txt -text "Daniel Roche"
+ label .apropos.mail -text "<daniel.roche@bigfoot.com>" -font 6x10
+ label .apropos.tec -text "-- Tcl/Tk --"
+ button .apropos.clic -text "click" -command "destroy .apropos" -highlightthickness 0
+
+ wm title .apropos $Messages(info)
+ pack .apropos.ver .apropos.by .apropos.ico \
+      .apropos.txt .apropos.mail .apropos.tec .apropos.clic -pady 4
+}
+
+#########################################################
+# read current config
+#########################################################
+proc GetCurrentState {{cron 1}  {at 1} } {
+    global cronenv
+
+    if { $cron } {
+
+	set cronenv ""
+
+#       if no crontab file , create an empty one
+#       to avoid the close to produce an error
+	exec sh << "crontab -l > /dev/null 2>&1 ; if \[ \$? -ne 0 \]; then > /tmp/croninit; crontab /tmp/croninit; rm /tmp/croninit; fi"
+
+	.fram1.frm10.lst1 delete 0 end
+
+	set fid [open "| crontab -l" r]
+
+	gets $fid line
+	while {! [eof $fid]} {
+	    if { [string index $line 0] != "#" } {
+		if { [regexp {.* .* .* .* .* .*} $line] } {
+		    .fram1.frm10.lst1 insert end "$line"
+		} else {
+		    append cronenv "$line\n"
+		}
+	    }
+	    gets $fid line
+	}
+	close $fid
+    }
+
+    if { $at } {
+
+	.fram2.frm20.lst2 delete 0 end
+
+	set fid [open "| atq " r]
+	gets $fid line
+	while {! [eof $fid]} {
+	    set line2 [eval list $line]
+	    if { [string compare [lindex $line2 0] "#"] && \
+		 [string compare [lindex $line2 0] "Rank"] && \
+		 [string compare [lindex $line2 0] "Date"] } {
+	     scan $line "%s" line3
+	     set fid2 [open "| at -c $line3 | tail -2" r]
+	     gets $fid2 line4
+	     close $fid2
+	     .fram2.frm20.lst2 insert end "$line2 -> $line4"
+	    }
+	    gets $fid line
+	}
+	close $fid
+    }
+}
+
+#########################################################
+# popup time scheduling window
+#########################################################
+proc ShowProg { {regul} } {
+ global Messages
+ global to_exec
+ global Settings
+
+#
+# create widget
+#
+ toplevel .pgm -width 1000 -height 500
+ wm title .pgm $Messages(prgtitre)
+ grab set .pgm
+
+ frame .pgm.f1 -relief flat -borderwidth 2
+ frame .pgm.f2 -relief groove -borderwidth 2
+
+ set f2y 40
+ place .pgm.f1 -x 0 -relwidth 1.0 -rely 0.0 -relheight 1.0 -height [ expr - $f2y ]
+ place .pgm.f2 -x 0 -relwidth 1.0 -rely 1.0 -y [ expr - $f2y ] -height $f2y
+ unset f2y
+
+ frame .pgm.f1.f1 -relief flat -borderwidth 0
+ frame .pgm.f1.f2 -relief flat -borderwidth 0
+ frame .pgm.f1.f3 -relief flat -borderwidth 0
+ frame .pgm.f1.f4 -relief flat -borderwidth 0
+ frame .pgm.f1.f5 -relief flat -borderwidth 0
+ frame .pgm.f1.f6 -relief flat -borderwidth 0
+
+ place .pgm.f1.f1 -relx 0.0 -relwidth 0.16 -y 0 -relheight 1.0 -height -50
+ place .pgm.f1.f2 -relx 0.16 -relwidth 0.16 -y 0 -relheight 1.0 -height -50
+ place .pgm.f1.f3 -relx 0.32 -relwidth 0.16 -y 0 -relheight 1.0 -height -50
+ place .pgm.f1.f4 -relx 0.48 -relwidth 0.26 -y 0 -relheight 1.0 -height -50
+ place .pgm.f1.f5 -relx 0.74 -relwidth 0.26 -y 0 -relheight 1.0 -height -50
+ place .pgm.f1.f6 -relx 0.0 -relwidth 1.0 -rely 1.0 -y -50 -height 50
+
+ label .pgm.f1.f1.head -text $Messages(hmi) -foreground $Settings(HighColor) -anchor nw \
+     -font $Settings(HighFont)
+ frame .pgm.f1.f1.fw -relief sunken -borderwidth 2
+ pack .pgm.f1.f1.head -side top -fill both -anchor nw
+ pack .pgm.f1.f1.fw -side bottom -expand 1 -fill both -padx 2
+ canvas .pgm.f1.f1.fw.cv -borderwidth 0 -scrollregion {0 0 50 1100} \
+	-yscrollcommand ".pgm.f1.f1.fw.sb set" -bg $Settings(EntryColor)
+ scrollbar .pgm.f1.f1.fw.sb -command ".pgm.f1.f1.fw.cv yview" -bg $Settings(EntryColor)
+ set scw 16
+ place .pgm.f1.f1.fw.cv -x 0 -relwidth 1.0 -width [expr -$scw ] -y 0 \
+	 -relheight 1.0
+ place .pgm.f1.f1.fw.sb -relx 1.0 -x [expr -$scw ] -width $scw -y 0 \
+	 -relheight 1.0
+ unset scw
+ SetMinutes .pgm.f1.f1.fw.cv $regul
+
+ label .pgm.f1.f2.head -text $Messages(hhh) -foreground $Settings(HighColor) -anchor nw \
+     -font $Settings(HighFont)
+ frame .pgm.f1.f2.fw -relief sunken -borderwidth 2
+ pack .pgm.f1.f2.head -side top -fill both -anchor nw
+ pack .pgm.f1.f2.fw -side bottom -expand 1 -fill both -padx 2
+ canvas .pgm.f1.f2.fw.cv -borderwidth 0 -scrollregion {0 0 50 452} \
+	-yscrollcommand ".pgm.f1.f2.fw.sb set" -bg $Settings(EntryColor)
+ scrollbar .pgm.f1.f2.fw.sb -command ".pgm.f1.f2.fw.cv yview" -bg $Settings(EntryColor)
+ set scw 16
+ place .pgm.f1.f2.fw.cv -x 0 -relwidth 1.0 -width [expr -$scw ] -y 0 \
+	 -relheight 1.0
+ place .pgm.f1.f2.fw.sb -relx 1.0 -x [expr -$scw ] -width $scw -y 0 \
+	 -relheight 1.0
+ unset scw
+ SetHeures .pgm.f1.f2.fw.cv $regul
+
+ label .pgm.f1.f3.head -text $Messages(hjm) -foreground $Settings(HighColor) -anchor nw \
+     -font $Settings(HighFont)
+ frame .pgm.f1.f3.fw -relief sunken -borderwidth 2
+ pack .pgm.f1.f3.head -side top -fill both -anchor nw
+ pack .pgm.f1.f3.fw -side bottom -expand 1 -fill both -padx 2
+ canvas .pgm.f1.f3.fw.cv -borderwidth 0 -scrollregion {0 0 50 580} \
+	-yscrollcommand ".pgm.f1.f3.fw.sb set" -bg $Settings(EntryColor)
+ scrollbar .pgm.f1.f3.fw.sb -command ".pgm.f1.f3.fw.cv yview" -bg $Settings(EntryColor)
+ set scw 16
+ place .pgm.f1.f3.fw.cv -x 0 -relwidth 1.0 -width [expr -$scw] -y 0 \
+	 -relheight 1.0
+ place .pgm.f1.f3.fw.sb -relx 1.0 -x [expr -$scw] -width $scw -y 0 \
+	 -relheight 1.0
+ unset scw
+ SetJourDuMois .pgm.f1.f3.fw.cv $regul
+
+ label .pgm.f1.f4.head -text $Messages(hmo) -foreground $Settings(HighColor) -anchor nw \
+     -font $Settings(HighFont)
+ frame .pgm.f1.f4.fw -relief sunken -borderwidth 2
+ pack .pgm.f1.f4.head -side top -fill both -anchor nw
+ pack .pgm.f1.f4.fw -side bottom -expand 1 -fill both -padx 2
+ canvas .pgm.f1.f4.fw.cv -borderwidth 0 -scrollregion {0 0 100 236} \
+	-yscrollcommand ".pgm.f1.f4.fw.sb set" -bg $Settings(EntryColor)
+ scrollbar .pgm.f1.f4.fw.sb -command ".pgm.f1.f4.fw.cv yview" -bg $Settings(EntryColor)
+ set scw 16
+ place .pgm.f1.f4.fw.cv -x 0 -relwidth 1.0 -width [expr -$scw] -y 0 \
+	 -relheight 1.0
+ place .pgm.f1.f4.fw.sb -relx 1.0 -x [expr -$scw] -width $scw -y 0 \
+	 -relheight 1.0
+ unset scw
+ SetMois .pgm.f1.f4.fw.cv $regul
+
+ if { $regul } {
+     set hf6 $Messages(hjs)
+ } else {
+     set hf6 $Messages(han)
+ }
+
+ label .pgm.f1.f5.head -text $hf6 -foreground $Settings(HighColor) -anchor nw \
+     -font $Settings(HighFont)
+ frame .pgm.f1.f5.fw -relief sunken -borderwidth 2
+ pack .pgm.f1.f5.head -side top -fill both -anchor nw
+ pack .pgm.f1.f5.fw -side bottom -expand 1 -fill both -padx 2
+ canvas .pgm.f1.f5.fw.cv -borderwidth 0 -scrollregion {0 0 100 128} \
+	-yscrollcommand ".pgm.f1.f5.fw.sb set" -bg $Settings(EntryColor)
+ scrollbar .pgm.f1.f5.fw.sb -command ".pgm.f1.f5.fw.cv yview" -bg $Settings(EntryColor)
+ set scw 16
+ place .pgm.f1.f5.fw.cv -x 0 -relwidth 1.0 -width [expr -$scw] -y 0 \
+	 -relheight 1.0
+ place .pgm.f1.f5.fw.sb -relx 1.0 -x [expr -$scw] -width $scw -y 0 \
+	 -relheight 1.0
+ unset scw
+ if { $regul } {
+     SetJourDeSemaine .pgm.f1.f5.fw.cv
+ } else {
+     SetAnnee .pgm.f1.f5.fw.cv
+ }
+
+ label .pgm.f1.f6.hpg -text $Messages(exec) -foreground $Settings(HighColor) -anchor nw \
+     -font $Settings(HighFont)
+ frame .pgm.f1.f6.fw -relief flat -borderwidth 0
+ entry .pgm.f1.f6.fw.epg -highlightthickness 0 -background $Settings(EntryColor)
+ button .pgm.f1.f6.fw.bpg -text $Messages(parc) \
+	 -command {.pgm.f1.f6.fw.epg insert insert \
+	 [tk_getOpenFile -title $Messages(exec) ] }
+ pack .pgm.f1.f6.hpg -side top -fill both -anchor nw
+ pack .pgm.f1.f6.fw -side top -fill both -expand 1
+ pack .pgm.f1.f6.fw.epg -side left -expand 1 -fill both
+ pack .pgm.f1.f6.fw.bpg -side right -fill both
+ .pgm.f1.f6.fw.epg delete 0 end
+ .pgm.f1.f6.fw.epg insert 0 $to_exec
+
+ button .pgm.f2.ok -text $Messages(msgok) -highlightthickness 0 \
+	 -command OkProg
+ button .pgm.f2.xit -text $Messages(cancel) -highlightthickness 0 \
+	 -command "destroy .pgm"
+
+ pack .pgm.f2.ok -side left -padx 10
+ pack .pgm.f2.xit -side right -padx 10
+
+}
+
+#########################################################
+# callbacks & miscellaneous
+#########################################################
+proc Ajouter {} {
+    global st_cremod st_cronat
+    global Messages
+
+    set typ [tk_dialog .type $Messages(prgtitre) $Messages(prgtype) \
+	    question -1 $Messages(tregul) $Messages(toneshot) ]
+
+    if { $typ == "0" } {
+	RazTabVar
+	set st_cremod "create"
+	set st_cronat "cron"
+	ShowProg 1
+    } else {
+	RazTabVar
+	set st_cremod "create"
+	set st_cronat "at"
+	ShowProg 0
+    }
+
+}
+
+proc Modifier {} {
+    global st_cremod st_cronat
+
+# for cron job you can modify
+# for at job you can just view
+
+    set ind [.fram1.frm10.lst1 curselection]
+    if { $ind != "" } {
+	InitTabVar [.fram1.frm10.lst1 get $ind]
+	set st_cremod $ind
+	set st_cronat "cron"
+	ShowProg 1
+    } else {
+	set ind [.fram2.frm20.lst2 curselection]
+	if { $ind != "" } {
+	    set jobi [ GetJobNumberIndex ]
+	    set line [.fram2.frm20.lst2 get $ind]
+	    set jobn [lindex $line $jobi]
+	    ShowJob $jobn
+	}
+    }
+
+}
+
+proc Enlever {} {
+    global Messages
+
+    set ind [.fram1.frm10.lst1 curselection]
+    if { $ind != "" } {
+	set line [.fram1.frm10.lst1 get $ind]
+	set typ [tk_dialog .type $Messages(deltitle) \
+		"$Messages(confdel)\n$line" question -1 \
+		$Messages(msgok) $Messages(cancel) ]
+
+	if { ! $typ } {
+	    .fram1.frm10.lst1 delete $ind
+	    RePostCronTab
+	}
+    } else {
+	set ind [.fram2.frm20.lst2 curselection]
+	if { $ind != "" } {
+	    set line [.fram2.frm20.lst2 get $ind]
+	    set typ [tk_dialog .type $Messages(deltitle) \
+		    "$Messages(confdel)\n$line" question -1 \
+		    $Messages(msgok) $Messages(cancel) ]
+
+	    if { ! $typ } {
+		set jobi [ GetJobNumberIndex ]
+		.fram2.frm20.lst2 delete $ind
+		set jobn [lindex $line $jobi]
+		exec atrm $jobn
+	    }
+	}
+    }
+}
+
+proc CheckTab {tabname indx} {
+    upvar $tabname mytab
+
+    set val $mytab($indx)
+    if { $indx == "*" } {
+	if { $val == 1 } {
+	    # setting * remove all others
+	    foreach loopi [array names mytab] {
+		if { $loopi != "*" } {
+		    set mytab($loopi) 0
+		}
+	    }
+	}
+    } else {
+	if { $mytab(*) == 1 } {
+	    # more than one value is forbidden if * is set
+	    foreach loopi [array names mytab] {
+		if { $loopi != "*" && $loopi != $indx } {
+		    set mytab($loopi) 0
+		}
+	    }
+	    # and 0 or 1 is not a correct cycle value !
+	    set mytab(0) 0
+	    set mytab(1) 0
+	}
+    }
+
+}
+
+proc SetMinutes {father regul} {
+    global Messages Settings
+    if { $regul } {
+	  checkbutton $father.mia -text $Messages(any) -variable tab_minutes(*) \
+	      -bg $Settings(EntryColor) -selectcolor $Settings(SelColor1) \
+	      -command "CheckTab tab_minutes *"
+	  $father create window 4 0 -anchor nw -window $father.mia
+    }
+    set min 0
+    while { $min < 60 } {
+	if { $regul } {
+	    checkbutton $father.mi$min -text $min -variable tab_minutes($min) \
+		-bg $Settings(EntryColor) -selectcolor $Settings(SelColor1) \
+		-command "CheckTab tab_minutes $min"
+	    $father create window 4 [expr ($min + 1 ) * 18 ] -anchor nw \
+		    -window $father.mi$min
+	} else {
+	    radiobutton $father.mi$min -text $min -variable at_minute -value $min \
+		-bg $Settings(EntryColor) -selectcolor $Settings(SelColor1)
+	    $father create window 4 [expr $min * 18 ] -anchor nw -window $father.mi$min
+	}
+	incr min
+    }
+}
+
+proc SetHeures {father regul} {
+    global Messages Settings
+    set heur 0
+    if { $regul } {
+	  checkbutton $father.hha -text  $Messages(any) -variable tab_heures(*) \
+	      -bg $Settings(EntryColor) -selectcolor $Settings(SelColor1) \
+	      -command "CheckTab tab_heures *"
+	  $father create window 4  0 -anchor nw -window $father.hha
+    }
+    while { $heur < 24 } {
+	if { $regul } {
+	    checkbutton $father.hh$heur -text $heur -variable tab_heures($heur) \
+		-bg $Settings(EntryColor) -selectcolor $Settings(SelColor1) \
+		-command "CheckTab tab_heures $heur"
+	    $father create window 4 [expr ( $heur + 1 ) * 18] -anchor nw \
+		    -window $father.hh$heur
+	} else {
+	    radiobutton $father.hh$heur -text $heur -variable at_heure -value $heur \
+		-bg $Settings(EntryColor) -selectcolor $Settings(SelColor1)
+	    $father create window 4 [expr $heur * 18] -anchor nw -window $father.hh$heur
+	}
+	incr heur
+    }
+}
+
+proc SetJourDuMois {father regul} {
+    global Messages Settings
+    set jdm 1
+    if { $regul } {
+	  checkbutton $father.jma -text  $Messages(any) -variable tab_joursdumois(*) \
+	      -bg $Settings(EntryColor) -selectcolor $Settings(SelColor1) \
+	      -command "CheckTab tab_joursdumois *"
+	  $father create window 4  0 -anchor nw -window $father.jma
+    }
+    while { $jdm < 32 } {
+	if { $regul } {
+	    checkbutton $father.jm$jdm -text $jdm -variable tab_joursdumois($jdm) \
+		-bg $Settings(EntryColor) -selectcolor $Settings(SelColor1) \
+		-command "CheckTab tab_joursdumois $jdm"
+	    $father create window 4 [expr $jdm * 18] -anchor nw -window $father.jm$jdm
+	} else {
+	    radiobutton $father.jm$jdm -text $jdm -variable at_jour -value $jdm \
+		-bg $Settings(EntryColor) -selectcolor $Settings(SelColor1)
+	    $father create window 4 [expr ($jdm - 1) * 18] -anchor nw \
+		    -window $father.jm$jdm
+	}
+	incr jdm
+    }
+}
+
+proc SetMois {father regul} {
+    global Messages Settings
+    set moi 1
+    if { $regul } {
+	  checkbutton $father.moa -text $Messages(any) -variable tab_mois(*) \
+	      -bg $Settings(EntryColor) -selectcolor $Settings(SelColor1) \
+	      -command "CheckTab tab_mois *"
+	  $father create window 4  0 -anchor nw -window $father.moa
+    }
+    while { $moi < 13 } {
+	if { $regul } {
+	    checkbutton $father.mo$moi -text "[lindex $Messages(smoi) $moi] ($moi)" \
+		-variable tab_mois($moi) -bg $Settings(EntryColor) \
+		-selectcolor $Settings(SelColor1) \
+		-command "CheckTab tab_mois $moi"
+	    $father create window 4 [expr $moi * 18] -anchor nw -window $father.mo$moi
+	} else {
+	    radiobutton $father.mo$moi -text [lindex $Messages(smoi) $moi] \
+		-variable at_mois -value $moi -bg $Settings(EntryColor) \
+		-selectcolor $Settings(SelColor1)
+	    $father create window 4 [expr ($moi - 1) * 18] -anchor nw \
+		    -window $father.mo$moi
+	}
+	incr moi
+    }
+}
+
+proc SetJourDeSemaine {father} {
+    global Messages Settings
+
+    checkbutton $father.jsa -text $Messages(any) -variable tab_joursdesemaine(*) \
+	-bg $Settings(EntryColor) -selectcolor $Settings(SelColor1) \
+	-command "CheckTab tab_joursdesemaine *"
+    $father create window 4 0 -anchor nw -window $father.jsa
+    set jds 0
+    while { $jds < 7 } {
+	checkbutton $father.js$jds -text "[lindex $Messages(sjour) $jds] ($jds)" \
+	    -variable tab_joursdesemaine($jds) -bg $Settings(EntryColor) \
+	    -selectcolor $Settings(SelColor1) \
+	    -command "CheckTab tab_joursdesemaine $jds"
+	$father create window 4 [expr ($jds + 1) * 18] -anchor nw -window $father.js$jds
+	incr jds
+    }
+}
+
+proc SetAnnee {father} {
+    global Settings
+    set ban [clock format [clock seconds] -format "%Y"]
+    set ian 0
+    while { $ian < 10 } {
+	set can [ expr $ban + $ian]
+	radiobutton $father.aa$ian -text $can -variable at_annee -value $can \
+		-bg $Settings(EntryColor) -selectcolor $Settings(SelColor1)
+	$father create window 4 [expr $ian * 18] -anchor nw -window $father.aa$ian
+	incr ian
+    }
+}
+
+proc OkCronProg {} {
+    global tab_minutes tab_heures tab_joursdumois tab_mois tab_joursdesemaine
+    global st_cremod
+
+    set line ""
+    set isset(min) 0
+    set isset(heur) 0
+    set isset(jdm) 0
+    set isset(moi) 0
+    set isset(jds) 0
+
+    ##################
+    if { $tab_minutes(*) == 1 } {
+	append line "*"
+	set isset(min) 1
+	set any 1
+    } else {
+	set any 0
+    }
+    set min 0
+    while { $min < 60 } {
+	if { $tab_minutes($min) } {
+	    set isset(min) 1
+	    if { $any } {
+		# more than one value with * is forbidden !
+		append line "/$min"
+	    } else {
+		append line "$min,"
+	    }
+	}
+	incr min
+    }
+
+    set line [ string trimright $line ","]
+    append line " "
+
+    ##################
+    if { $tab_heures(*) == 1 } {
+	append line "*"
+	set isset(heur) 1
+	set any 1
+    } else {
+	set any 0
+    }
+    set heur 0
+    while { $heur < 24 } {
+	if { $tab_heures($heur) } {
+	    set isset(heur) 1
+	    if { $any } {
+		# more than one value with * is forbidden !
+		append line "/$heur"
+	    } else {
+		append line "$heur,"
+	    }
+	}
+	incr heur
+    }
+
+    set line [ string trimright $line ","]
+    append line " "
+
+    ##################
+    if { $tab_joursdumois(*) == 1 } {
+	append line "*"
+	set isset(jdm) 1
+	set any 1
+    } else {
+	set any 0
+    }
+    set jdm 1
+    while { $jdm <= 31 } {
+	if { $tab_joursdumois($jdm) } {
+	    set isset(jdm) 1
+	    if { $any } {
+		# more than one value with * is forbidden !
+		append line "/$jdm"
+	    } else {
+		append line "$jdm,"
+	    }
+	}
+	incr jdm
+    }
+
+    set line [ string trimright $line ","]
+    append line " "
+
+    ##################
+    if { $tab_mois(*) == 1 } {
+	append line "*"
+	set isset(moi) 1
+	set any 1
+    } else {
+	set any 0
+    }
+    set moi 1
+    while { $moi <= 12 } {
+	if { $tab_mois($moi) } {
+	    set isset(moi) 1
+	    if { $any } {
+		# more than one value with * is forbidden !
+		append line "/$moi"
+	    } else {
+		append line "$moi,"
+	    }
+	}
+	incr moi
+    }
+
+    set line [ string trimright $line ","]
+    append line " "
+
+    ##################
+    if { $tab_joursdesemaine(*) == 1 } {
+	append line "*"
+	set isset(jds) 1
+	set any 1
+    } else {
+	set any 0
+    }
+    set jds 0
+    while { $jds < 7 } {
+	if { $tab_joursdesemaine($jds) } {
+	    set isset(jds) 1
+	    if { $any } {
+		# more than one value with * is forbidden !
+		append line "/$jds"
+	    } else {
+		append line "$jds,"
+	    }
+	}
+	incr jds
+    }
+
+    set line [ string trimright $line ","]
+    append line " "
+
+    ##################
+
+    set nbr [expr $isset(min) + $isset(heur) + $isset(jdm) + $isset(moi) + $isset(jds) ]
+    if { $nbr != 5 } {
+	return "bad"
+    }
+
+    ##################
+    set spgm [.pgm.f1.f6.fw.epg get]
+    if { $spgm == "" } {
+	return "bad"
+    }
+    append line $spgm
+
+    if { $st_cremod == "create" } {
+	.fram1.frm10.lst1 insert end "$line"
+    } else {
+	.fram1.frm10.lst1 delete $st_cremod
+	.fram1.frm10.lst1 insert $st_cremod "$line"
+    }
+
+    RePostCronTab
+    return "ok"
+}
+
+proc OkAtProg {} {
+    global at_minute at_heure at_jour at_mois at_annee
+
+    if { $at_minute != "" } {
+	if { $at_heure != "" } {
+	    set hour [format "%02d:%02d" $at_heure $at_minute]
+	} else {
+	    return "bad"
+	}
+    } else {
+	return "bad"
+    }
+
+    if { $at_jour != "" } {
+	if { $at_mois != "" } {
+	    if { $at_annee != "" } {
+		set day [format "%02d/%02d/%d" $at_mois $at_jour $at_annee]
+	    } else {
+		return "bad"
+	    }
+	} else {
+	    return "bad"
+	}
+    } else {
+	if { $at_mois == "" } {
+	    if { $at_annee == "" } {
+		set day ""
+	    } else {
+		return "bad"
+	    }
+	} else {
+	    return "bad"
+	}
+    }
+
+    set spgm [.pgm.f1.f6.fw.epg get]
+    if { $spgm == "" } {
+	return "bad"
+    }
+
+    set fid [open "/tmp/atfile" w]
+    puts $fid $spgm
+    close $fid
+
+    exec at -f /tmp/atfile $hour $day >& /dev/null
+    file delete "/tmp/atfile"
+
+    GetCurrentState 0 1
+
+    return "ok"
+}
+
+proc OkProg {} {
+    global st_cronat
+
+    if { $st_cronat == "cron" } {
+	set ret [OkCronProg]
+    } else {
+	set ret [OkAtProg]
+    }
+    if { $ret == "ok" } {
+	destroy .pgm
+    }
+}
+
+proc RePostCronTab {} {
+    global cronenv
+
+    set fid [open "/tmp/croninit" w]
+
+    # first set the environment
+    if { [string length $cronenv] } {
+	puts $fid $cronenv
+    }
+
+    # set each cron line
+    set ind 0
+    set max [.fram1.frm10.lst1 size]
+    while { $ind < $max } {
+	set line [.fram1.frm10.lst1 get $ind]
+	puts $fid $line
+	incr ind
+    }
+    close $fid
+
+    exec crontab /tmp/croninit
+    file delete /tmp/croninit
+}
+
+proc RazTabVar {} {
+    global tab_minutes tab_heures tab_joursdumois tab_mois tab_joursdesemaine to_exec
+    global at_minute at_heure at_jour at_mois at_annee
+    global argc argv
+
+    set tab_minutes(*) 0
+    set min 0
+    while { $min < 60 } {
+	set tab_minutes($min) 0
+	incr min
+    }
+    set tab_heures(*) 0
+    set heur 0
+    while { $heur < 24 } {
+	set tab_heures($heur) 0
+	incr heur
+    }
+    set tab_joursdumois(*) 0
+    set jdm 1
+    while { $jdm < 32 } {
+	set tab_joursdumois($jdm) 0
+	incr jdm
+    }
+    set tab_mois(*) 0
+    set moi 1
+    while { $moi < 13 } {
+	set tab_mois($moi) 0
+	incr moi
+    }
+    set tab_joursdesemaine(*) 0
+    set jds 0
+    while { $jds < 7 } {
+	set tab_joursdesemaine($jds) 0
+	incr jds
+    }
+
+    set at_minute ""
+    set at_heure ""
+    set at_jour ""
+    set at_mois ""
+    set at_annee ""
+
+    if [ expr $argc != 0 ] {
+	set to_exec $argv
+    } else {
+	set to_exec ""
+    }
+}
+
+proc InitTabVar {data} {
+    global tab_minutes tab_heures tab_joursdumois tab_mois tab_joursdesemaine to_exec
+    global at_minute at_heure at_jour at_mois at_annee
+
+    RazTabVar
+
+    set champ [lindex $data 0]
+    if [ regexp {\*/([0-9]*)} $champ all div ] {
+	set tab_minutes(*) 1
+	set tab_minutes($div) 1
+    } else {
+	set tmpl [split $champ ","]
+	foreach ind $tmpl {
+	    set tab_minutes($ind) 1
+	}
+    }
+
+    set champ [lindex $data 1]
+    if [ regexp {\*/([0-9]*)} $champ all div ] {
+	set tab_heures(*) 1
+	set tab_heures($div) 1
+    } else {
+	set tmpl [split $champ ","]
+	foreach ind $tmpl {
+	    set tab_heures($ind) 1
+	}
+    }
+
+    set champ [lindex $data 2]
+    if [ regexp {\*/([0-9]*)} $champ all div ] {
+	set tab_joursdumois(*) 1
+	set tab_joursdumois($div) 1
+    } else {
+	set tmpl [split $champ ","]
+	foreach ind $tmpl {
+	    set tab_joursdumois($ind) 1
+	}
+    }
+
+    set champ [lindex $data 3]
+    if [ regexp {\*/([0-9]*)} $champ all div ] {
+	set tab_mois(*) 1
+	set tab_mois($div) 1
+    } else {
+	set tmpl [split $champ ","]
+	foreach ind $tmpl {
+	    set tab_mois($ind) 1
+	}
+    }
+
+    set champ [lindex $data 4]
+    if [ regexp {\*/([0-9]*)} $champ all div ] {
+	set tab_joursdesemaine(*) 1
+	set tab_joursdesemaine($div) 1
+    } else {
+	set tmpl [split $champ ","]
+	foreach ind $tmpl {
+	    set tab_joursdesemaine($ind) 1
+	}
+    }
+
+    regexp {[^ ]* [^ ]* [^ ]* [^ ]* [^ ]* (.*)} $data all comm
+    set to_exec $comm
+}
+
+proc GetJobNumberIndex {} {
+
+    exec sh << "at -V > /tmp/at.vers 2>&1; echo"
+
+    set fid [open "/tmp/at.vers" r]
+    gets $fid line
+    close $fid
+
+    file delete "/tmp/at.vers"
+
+    set vers [lindex $line 2]
+
+    switch -exact $vers {
+	"3.1.7" {
+	    return 0
+	}
+	"3.1.8" {
+	    return 0
+	}
+	"2.9b" {
+	    return 4
+	}
+	"2.9" {
+	    return 4
+	}
+    }
+    return "0"
+}
+
+proc ShowJob {jobn} {
+    global Messages Settings
+
+    if { ! [ winfo exists .jobview ] } {
+	toplevel .jobview
+	label .jobview.head -text "job :" -anchor nw -pady 4 -foreground $Settings(HighColor) \
+	    -font $Settings(HighFont)
+	pack .jobview.head -side top -fill x
+	button .jobview.xit -text "$Messages(msgok)" -command {destroy .jobview}
+	pack .jobview.xit -side bottom -pady 4
+	frame .jobview.fh -borderwidth 0
+	pack .jobview.fh -side top -expand 1 -fill both
+	text .jobview.fh.txt -wrap none -bg $Settings(EntryColor) \
+		-yscrollcommand ".jobview.fh.sbv set" \
+		-xscrollcommand ".jobview.fh.sbh set"
+	scrollbar .jobview.fh.sbv -command ".jobview.fh.txt yview"
+	scrollbar .jobview.fh.sbh -orient horizontal \
+		-command ".jobview.fh.txt xview"
+	button .jobview.fh.sbx -text " " -borderwidth 1 -command {
+	    .jobview.fh.txt xview moveto 0
+	    .jobview.fh.txt yview moveto 0
+	}
+	set scw 16
+	place .jobview.fh.txt -x 4 -relwidth 1.0 -width [expr -$scw - 8 ] \
+		-y 4  -relheight 1.0 -height [ expr -$scw - 8 ]
+	place .jobview.fh.sbv -relx 1.0 -x [expr -$scw - 4 ] -width $scw \
+		-y 4  -relheight 1.0 -height [ expr -$scw - 8 ]
+	place .jobview.fh.sbh -rely 1.0 -y [expr -$scw - 4 ] -height $scw \
+		-x 4  -relwidth 1.0 -width [ expr -$scw - 8 ]
+	place .jobview.fh.sbx -rely 1.0 -y [expr -$scw - 4 ] -height $scw \
+		-relx 1.0 -x [expr -$scw - 4 ] -width $scw
+
+	wm title .jobview "Job"
+	wm geometry .jobview 400x400
+    }
+
+    set jobcat [ exec at -c $jobn ]
+    if [ string length $jobcat ] {
+	.jobview.fh.txt delete 0.0 end
+	.jobview.head configure -text "at job $jobn :"
+	.jobview.fh.txt insert end $jobcat
+    }
+}
+
+proc usage {} {
+    puts "usage : vcron \[-regular|-oneshot\] \[program to execute\]"
+    exit
+}
+
+proc dupdate {} {
+ global currentdate
+ global Messages
+
+ set secs [clock seconds]
+ set jsi [clock format $secs -format "%w"]
+ set mm [clock format $secs -format "%m"]
+ set dd [clock format $secs -format "%d"]
+ set yy [clock format $secs -format "%Y"]
+ set heur [clock format $secs -format "%H:%M:%S"]
+
+ set currentdate "[lindex $Messages(sjour) $jsi] $mm/$dd/$yy $heur"
+ after 1000 dupdate
+}
+
+#########################################################
+# cron environnement
+#########################################################
+
+proc SetCronEnv {} {
+    global cronenv Settings Messages
+
+    if { ! [ winfo exists .cronenv ] } {
+	toplevel .cronenv
+	label .cronenv.head -text "$Messages(cronenv)" -anchor nw -pady 4 -foreground $Settings(HighColor) \
+	    -font $Settings(HighFont)
+	pack .cronenv.head -side top -fill x
+	frame .cronenv.buts -borderwidth 0
+	pack .cronenv.buts -side bottom -pady 4 -expand 0 -fill x
+	button .cronenv.buts.set -text "$Messages(msgok)" -command "UpdateCronEnv"
+	button .cronenv.buts.spl -text "$Messages(sample)" -command {
+	    .cronenv.fh.txt insert end {MAILTO=""}
+	    .cronenv.fh.txt insert end "\n"
+	    .cronenv.fh.txt insert end {LANG="en_US"}
+	    .cronenv.fh.txt insert end "\n"
+	}
+	button .cronenv.buts.xit -text "$Messages(cancel)" -command {destroy .cronenv}
+	pack .cronenv.buts.set -side left -padx 10
+	pack .cronenv.buts.spl -side left -padx 10
+	pack .cronenv.buts.xit -side right -padx 10
+	frame .cronenv.fh -borderwidth 0
+	pack .cronenv.fh -side top -expand 1 -fill both
+	text .cronenv.fh.txt -wrap none -background $Settings(EntryColor) \
+	    -yscrollcommand ".cronenv.fh.sbv set" \
+	    -xscrollcommand ".cronenv.fh.sbh set"
+	scrollbar .cronenv.fh.sbv -command ".cronenv.fh.txt yview"
+	scrollbar .cronenv.fh.sbh -orient horizontal \
+	    -command ".cronenv.fh.txt xview"
+	button .cronenv.fh.sbx -text " " -borderwidth 1 -command {
+	    .cronenv.fh.txt xview moveto 0
+	    .cronenv.fh.txt yview moveto 0
+	}
+	set scw 16
+	place .cronenv.fh.txt -x 4 -relwidth 1.0 -width [expr -$scw - 8 ] \
+	    -y 4  -relheight 1.0 -height [ expr -$scw - 8 ]
+	place .cronenv.fh.sbv -relx 1.0 -x [expr -$scw - 4 ] -width $scw \
+	    -y 4  -relheight 1.0 -height [ expr -$scw - 8 ]
+	place .cronenv.fh.sbh -rely 1.0 -y [expr -$scw - 4 ] -height $scw \
+	    -x 4  -relwidth 1.0 -width [ expr -$scw - 8 ]
+	place .cronenv.fh.sbx -rely 1.0 -y [expr -$scw - 4 ] -height $scw \
+	    -relx 1.0 -x [expr -$scw - 4 ] -width $scw
+
+	wm title .cronenv $Messages(titre)
+	wm geometry .cronenv 400x250
+    }
+
+    .cronenv.fh.txt delete 0.0 end
+    .cronenv.fh.txt insert end $cronenv
+}
+
+proc UpdateCronEnv {} {
+    global cronenv
+
+    set newenv [.cronenv.fh.txt get 0.0 end]
+    set cronenv [string trimright $newenv]
+
+    RePostCronTab
+
+    destroy .cronenv
+}
+
+########################################################
+#
+# On line Help
+#
+#########################################################
+
+proc HelpMan {head file} {
+ global vcronlib
+
+ set Lang [GetLang]
+
+ set fhlp [file join $vcronlib doc "$file.$Lang" ]
+ if [ file isfile $fhlp] {
+   ShowHelp "$head :" $fhlp
+ } else {
+   set fhlp [file join $vcronlib doc "$file.GB" ]
+   if [ file isfile $fhlp] {
+     ShowHelp "$head :" $fhlp
+   }
+ }
+}
+
+proc ShowHelp {head file} {
+ global Messages Settings
+
+ if { ! [ winfo exists .onlhelp ] } {
+   toplevel .onlhelp
+   label .onlhelp.head -text "head" -anchor nw -pady 4 -foreground $Settings(HighColor) \
+       -font $Settings(HighFont)
+   pack .onlhelp.head -side top -fill x
+   button .onlhelp.xit -text "$Messages(msgok)" -command {destroy .onlhelp}
+   pack .onlhelp.xit -side bottom -pady 4
+   frame .onlhelp.fh -borderwidth 0
+   pack .onlhelp.fh -side top -expand 1 -fill both
+   text .onlhelp.fh.txt -wrap none -background $Settings(EntryColor) \
+	 -yscrollcommand ".onlhelp.fh.sbv set" \
+	 -xscrollcommand ".onlhelp.fh.sbh set"
+   scrollbar .onlhelp.fh.sbv -command ".onlhelp.fh.txt yview"
+   scrollbar .onlhelp.fh.sbh -orient horizontal \
+	-command ".onlhelp.fh.txt xview"
+   button .onlhelp.fh.sbx -text " " -borderwidth 1 -command {
+    .onlhelp.fh.txt xview moveto 0
+    .onlhelp.fh.txt yview moveto 0
+   }
+   set scw 16
+   place .onlhelp.fh.txt -x 4 -relwidth 1.0 -width [expr -$scw - 8 ] \
+ 	-y 4  -relheight 1.0 -height [ expr -$scw - 8 ]
+   place .onlhelp.fh.sbv -relx 1.0 -x [expr -$scw - 4 ] -width $scw \
+	-y 4  -relheight 1.0 -height [ expr -$scw - 8 ]
+   place .onlhelp.fh.sbh -rely 1.0 -y [expr -$scw - 4 ] -height $scw \
+	-x 4  -relwidth 1.0 -width [ expr -$scw - 8 ]
+   place .onlhelp.fh.sbx -rely 1.0 -y [expr -$scw - 4 ] -height $scw \
+	-relx 1.0 -x [expr -$scw - 4 ] -width $scw
+
+   wm title .onlhelp $Messages(htitle)
+   wm geometry .onlhelp 400x300
+ }
+
+ set fid [open $file r]
+ if [ string length $fid ] {
+   .onlhelp.fh.txt delete 0.0 end
+   .onlhelp.head configure -text $head
+   gets $fid line
+   while { ! [eof $fid] } {
+     .onlhelp.fh.txt insert end "$line\n"
+     gets $fid line
+   }
+   close $fid
+ }
+
+}
+
+#########################################################
+# options
+#########################################################
+
+proc SetLang {} {
+    global Messages Config Temp
+
+    if [ winfo exists .lng ] {
+	return
+    }
+
+    toplevel .lng
+    wm title .lng $Messages(setlang)
+
+    set Temp(tmplng) $Config(lng)
+
+    frame .lng.f1 -borderwidth 0
+    pack .lng.f1 -padx 2 -pady 2 -expand 1 -fill both
+
+    frame .lng.btf -borderwidth 2 -relief groove
+    pack .lng.btf -padx 0 -pady 0 -fill x
+
+    button .lng.btf.ok -text $Messages(msgok) -command { OkLang }
+    button .lng.btf.no -text $Messages(cancel) -command {
+	destroy .lng
+    }
+
+    pack .lng.btf.ok .lng.btf.no -side left -padx 8 -pady 4
+
+    set frm .lng.f1
+    grid columnconf $frm 0 -weight 1
+    grid columnconf $frm 1 -weight 2
+    grid rowconf $frm 3 -weight 1
+
+    label $frm.lb -text $Messages(lang) -anchor w
+    grid $frm.lb -row 0 -column 0 -sticky nsew -padx 6 -pady 0
+
+    frame $frm.fl -borderwidth 0 -relief flat
+    grid $frm.fl -row 0 -column 1 -sticky nsew -padx 6 -pady 0
+
+    menubutton $frm.fl.mb -textvariable Temp(tmplng) \
+	    -indicatoron 1 -relief raised -menu $frm.fl.mb.m
+    menu $frm.fl.mb.m -tearoff 0
+    $frm.fl.mb.m add command -label "-- (LANG/LC_ALL)" \
+	 -command "set Temp(tmplng) {--}"
+    $frm.fl.mb.m add command -label "GB" \
+	 -command "set Temp(tmplng) {GB}"
+    set lnglst [ GetLangList ]
+    foreach lng $lnglst {
+	$frm.fl.mb.m add command -label "$lng" \
+		-command "set Temp(tmplng) $lng"
+    }
+    pack $frm.fl.mb -side left -padx 2 -pady 2
+
+}
+
+proc GetLangList {} {
+    global vcronlib
+
+    cd $vcronlib
+    set ficlst [ glob -nocomplain message.* ]
+    set lnglst {}
+    foreach fic $ficlst {
+	lappend lnglst [string trimleft [file extension $fic] .]
+    }
+    return $lnglst
+}
+
+proc OkLang {} {
+    global Config Temp
+
+    set Config(lng) $Temp(tmplng)
+    destroy .lng
+
+    WriteConfig
+}
+
+#########################################################
+# configuration stuff
+#########################################################
+proc InitDefaultConfig {} {
+    global Config env
+
+    set Config(lng) "--"
+}
+
+proc WriteConfig {} {
+    global Config env
+
+    set fid [open [file join $env(HOME) ".vcron"] w]
+    puts $fid "# vcron generated config file"
+    puts $fid "#"
+
+    set clst [array names Config]
+    foreach elem $clst {
+	puts $fid "set Config($elem) \{$Config($elem)\}"
+    }
+    close $fid
+}
+
+proc ReadConfig {} {
+    global Config env
+
+    source [file join $env(HOME) ".vcron"]
+}
+
+proc GetLang {} {
+    global Config env
+
+    if { ![ string compare $Config(lng) "--" ]} {
+	if [ info exists env(LANG) ] {
+	    set lang [string toupper [string range $env(LANG) 0 1]]
+	} elseif [ info exists env(LC_ALL) ] {
+	    set lang [string toupper [string range $env(LC_ALL) 0 1]]
+	} else {
+	    set lang "GB"
+	}
+    } else {
+	set lang $Config(lng)
+    }
+    return $lang
+}
+
+########################################################
+#
+# MAIN
+#
+#########################################################
+
+InitDefaultConfig
+if { ![ file exists [file join $env(HOME) ".vcron"] ]} {
+    WriteConfig
+} else {
+    ReadConfig
+}
+
+ReadMessages
+CreateMainWidgets
+
+GetCurrentState 1 1
+
+#
+# auto add if arguments
+#
+if [ expr $argc != 0 ] {
+    set arg1 [lindex $argv 0]
+    switch -exact -- $arg1 {
+	"-regular" {
+	    set argv [ lrange $argv 1 end]
+	    RazTabVar
+	    set st_cremod "create"
+	    set st_cronat "cron"
+	    ShowProg 1
+	}
+	"-oneshot" {
+	    set argv [ lrange $argv 1 end]
+	    RazTabVar
+	    set st_cremod "create"
+	    set st_cronat "at"
+	    ShowProg 0
+	}
+	"-h" {
+	    usage
+	}
+	"-help" {
+	    usage
+	}
+	"--help" {
+	    usage
+	}
+	default {
+	  .fram3.cre invoke
+	}
+    }
+}
+
+dupdate

@@ -1,0 +1,10 @@
+# shellcheck shell=bash disable=SC2034
+# git.conf.example
+# Personal git identity used by install-git.sh for `git config --global`.
+#
+# Copy this to git.conf and fill in your own values -- git.conf itself is
+# gitignored so your real name/email never gets committed:
+#   cp git.conf.example git.conf
+
+GIT_USER_NAME="Your Name"
+GIT_USER_EMAIL="you@example.com"

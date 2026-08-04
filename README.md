@@ -50,6 +50,8 @@ Most application config is backed up generically via `backup-restore-configs-man
 - `contrib/` — small utility scripts (repo file listings), not part of install/backup
 - `backup/` — generated backup output (gitignored, kept via `.gitkeep`)
 
+See [docs/scripts.md](docs/scripts.md) for a one-line description of every script in the repo.
+
 ## Acknowledgments
 
 - Code review, bug fixes, and documentation assisted by [Claude](https://www.anthropic.com/claude).

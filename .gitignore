@@ -1,4 +1,5 @@
 git.conf
+sync-backup.conf
 
 # Generated backup/inventory output (theme.conf, dconf dumps, config
 # backups, package_inventory.sh reports, etc.) -- personal machine state,

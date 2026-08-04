@@ -13,9 +13,9 @@
 #                   the destination directory. If not provided, deletions are disabled.
 #
 # Inputs:
-#   - SRCDIR: An array containing the paths of the source directories to sync.
-#   - DSTDIR: The path of the destination directory where the directories will
-#             be synchronized.
+#   - sync-backup.conf (gitignored, copy from sync-backup.conf.example): sets
+#     SRCDIR (array of source directory paths to sync) and DSTDIR (the
+#     destination directory where they'll be synchronized).
 #   - RSYNC_OPTS: Extra rsync flags built from CLI args (currently just --delete).
 #
 # Outputs:
@@ -34,26 +34,22 @@
 
 set -uo pipefail
 
-# Define source and destination directories
-SRCDIR=(
-    "/home/william/Downloads/"
-    "/home/william/Documents/"
-    "/home/william/bin/"
-    "/home/william/CODE/"
-    "/home/william/Cozy Drive/"
-    "/home/william/Dropbox/"
-    "/home/william/Internxt/"
-    "/home/william/MESSAGES/"
-    "/home/william/OneDrive_bonelfier@outlook.com/"
-    "/home/william/Patiobar/"
-    "/home/william/projects/"
-    "/home/william/stargate/"
-    "/home/william/thunar-actions/"
-    "/home/william/StreamripDownloads/"
-    "/home/william/Videos/"
-    "/home/william/Desktop/"
-)
-DSTDIR="/media/william/OracleHarbor/sync-backup/"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONF_FILE="$SCRIPT_DIR/sync-backup.conf"
+CONF_EXAMPLE="$SCRIPT_DIR/sync-backup.conf.example"
+
+if [ -f "$CONF_FILE" ]; then
+    # shellcheck source=sync-backup.conf
+    source "$CONF_FILE"
+else
+    if [ ! -f "$CONF_EXAMPLE" ]; then
+        echo "Missing $CONF_FILE (and no sync-backup.conf.example to seed it from) -- create it with SRCDIR and DSTDIR set." >&2
+        exit 1
+    fi
+    cp "$CONF_EXAMPLE" "$CONF_FILE"
+    echo "Seeded $CONF_FILE from sync-backup.conf.example -- edit SRCDIR/DSTDIR for your system, then re-run." >&2
+    exit 1
+fi
 
 # Parse command line arguments
 RSYNC_OPTS=()

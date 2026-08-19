@@ -1,0 +1,12 @@
+# shellcheck shell=bash disable=SC2034
+# sync-backup.conf.example
+# Copy this file to sync-backup.conf (gitignored) and edit for your system.
+
+# Source directories to sync (trailing slash matters for rsync).
+SRCDIR=(
+    "$HOME/Downloads/"
+    "$HOME/Documents/"
+)
+
+# Destination directory (e.g. an external/backup drive).
+DSTDIR="/media/$USER/Backup/sync-backup/"

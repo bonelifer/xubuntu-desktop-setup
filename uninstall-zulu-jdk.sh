@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 #
-# Script: uninstall-old-zulu.sh
+# Script: uninstall-zulu-jdk.sh
 # Description: Keep only the latest LTS (25) Zulu JDK, install it if
 #              missing, and uninstall only packages that are actually
 #              installed.

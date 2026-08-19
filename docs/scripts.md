@@ -42,6 +42,12 @@ One-line description of every script in the repo. Descriptions are pulled from e
 | `install-yppa-manager.sh` | Installs Y-PPA-Manager via its apt repository |
 | `install-zulu-jdk.sh` | Installs Zulu JDK (current LTS) on Ubuntu |
 
+## Uninstall scripts
+
+| Script | What it does |
+|--------|---------------|
+| `uninstall-zulu-jdk.sh` | Keeps only the latest LTS Zulu JDK, installing it if missing and purging all other installed versions |
+
 ## Backup / restore scripts
 
 | Script | What it does |

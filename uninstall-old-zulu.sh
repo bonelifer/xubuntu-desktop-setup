@@ -373,20 +373,19 @@ has_version() {
 # ----------------------------------------------------------------------
 found_lts=()
 for ver in "${!installed_pkgs[@]}"; do
-    if [[ " ${LTS_VERSIONS[*]} " =~ " ${ver} " ]]; then
+    if [[ " ${LTS_VERSIONS[*]} " == *" ${ver} "* ]]; then
         found_lts+=("$ver")
     fi
 done
 for ver in "${!installed_dirs[@]}"; do
-    if [[ " ${LTS_VERSIONS[*]} " =~ " ${ver} " ]]; then
-        if [[ ! " ${found_lts[*]} " =~ " ${ver} " ]]; then
+    if [[ " ${LTS_VERSIONS[*]} " == *" ${ver} "* ]]; then
+        if [[ " ${found_lts[*]} " != *" ${ver} "* ]]; then
             found_lts+=("$ver")
         fi
     fi
 done
 
-IFS=$'\n' found_lts=($(sort -n <<<"${found_lts[*]}"))
-unset IFS
+mapfile -t found_lts < <(printf '%s\n' "${found_lts[@]}" | sort -n)
 
 # ----------------------------------------------------------------------
 # 5. Ensure Java 25 is present (install if missing)

@@ -1,16 +1,16 @@
 #!/usr/bin/bash
 
 # Script: backup-restore-keepassxc.sh
-# Description: Backup and Restore the last opened KeePassXC database.
+# Description: Backup and Restore KeePassXC databases stored on the desktop.
 #
 # Usage: ./backup-restore-keepassxc.sh [-b|--backup|-r|--restore]
 #
-# Dependencies: cp, grep, pgrep
+# Dependencies: cp, pgrep
 #
 # Notes:
 #   - This script checks if KeePassXC is running and performs backup or restore accordingly.
-#   - For backup, it copies the last opened database to a backup directory.
-#   - For restore, it copies the last opened database from the backup directory to the current user's desktop.
+#   - For backup, it copies all desktop .kdbx files to a backup directory.
+#   - For restore, it copies all backed-up .kdbx files to the current user's desktop.
 #   - The backup directory is created within the directory where the script is located.
 #   - Ensure that the required dependencies are installed and accessible in your environment.
 #
@@ -34,44 +34,32 @@ mkdir -p "$backup_dir"
 if pgrep -x "keepassxc" > /dev/null; then
     log_message "KeePassXC is running."
 
-    # Check the cache directory for the KeePassXC configuration
-    CONFIG_FILE="$HOME/.config/keepassxc/keepassxc.ini"
-    
-    # Check if the configuration file exists
-    if [ -f "$CONFIG_FILE" ]; then
-        log_message "KeePassXC configuration file found: $CONFIG_FILE"
+    shopt -s nullglob
 
-        # Extract the path of the last active database
-        LAST_DB_PATH=$(grep -oP '^LastActiveDatabase=\K.*' "$CONFIG_FILE")
-        
-        # Debugging: Print the extracted last active database path
-        log_message "Extracted LastActiveDatabase path: $LAST_DB_PATH"
-
-        # Check if the path is not empty
-        if [ -n "$LAST_DB_PATH" ]; then
-            case "${1:-}" in
-                -b | --backup)
-                    # Backup: Copy the last opened database to the backup directory
-                    cp "$LAST_DB_PATH" "$backup_dir/"
-                    log_message "Last opened KeePassXC database copied to: $backup_dir/"
-                    ;;
-                -r | --restore)
-                    # Restore: Copy the last opened database from the backup directory to the user's desktop
-                    cp "$backup_dir/$(basename "$LAST_DB_PATH")" "$HOME/Desktop/"
-                    log_message "Last opened KeePassXC database restored to: $HOME/Desktop/"
-                    ;;
-                *)
-                    log_message "Invalid argument. Usage: $0 [-b|--backup|-r|--restore]"
-                    exit 1
-                    ;;
-            esac
-        else
-            log_message "No last opened KeePassXC database path found."
-        fi
-    else
-        log_message "KeePassXC configuration file not found: $CONFIG_FILE"
-        exit 1
-    fi
+    case "${1:-}" in
+        -b | --backup)
+            database_files=("$HOME/Desktop/"*.kdbx)
+            if [ "${#database_files[@]}" -eq 0 ]; then
+                log_message "No KeePassXC databases found in: $HOME/Desktop/"
+                exit 1
+            fi
+            cp -- "${database_files[@]}" "$backup_dir/"
+            log_message "KeePassXC databases copied to: $backup_dir/"
+            ;;
+        -r | --restore)
+            database_files=("$backup_dir/"*.kdbx)
+            if [ "${#database_files[@]}" -eq 0 ]; then
+                log_message "No KeePassXC databases found in: $backup_dir/"
+                exit 1
+            fi
+            cp -- "${database_files[@]}" "$HOME/Desktop/"
+            log_message "KeePassXC databases restored to: $HOME/Desktop/"
+            ;;
+        *)
+            log_message "Invalid argument. Usage: $0 [-b|--backup|-r|--restore]"
+            exit 1
+            ;;
+    esac
 else
     log_message "KeePassXC is not running."
     exit 1

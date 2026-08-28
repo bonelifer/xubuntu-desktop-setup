@@ -5,7 +5,7 @@
 # =============================================================================
 # Purpose: Lists all installed applications across apt, snap, flatpak, pip, npm
 #          and identifies those with 'classic' installation mode (mainly snaps)
-#          Filters out OS base packages for APT section
+#          Splits APT packages into user, system/base, and dependency groups
 #          Prevents file manager lockups with .nopreview marker files
 # Outputs: Results saved to a dedicated directory (not in current folder)
 # Usage: ./package_inventory.sh [--classic-only] [--verbose] [--dry-run] [--json] [--show-os-packages] [--help]
@@ -250,7 +250,7 @@ parse_args() {
                 echo "  --verbose           Enable verbose/debug output"
                 echo "  --dry-run           Show what would be done without writing output"
                 echo "  --json              Output in JSON format (machine-readable)"
-                echo "  --show-os-packages  Show OS base packages in APT section (filtered out by default)"
+                echo "  --show-os-packages  Deprecated compatibility option; all APT groups are always shown"
                 echo "  --show-ubuntu-snaps Show Ubuntu/system snaps in Snap section (filtered out by default)"
                 echo "  --help              Show this help message"
                 echo ""
@@ -390,6 +390,58 @@ EOF
     echo "$os_packages_file"
 }
 
+# Format raw dpkg rows and retain an architecture suffix only for packages
+# installed for more than one architecture.
+format_apt_packages() {
+    local packages_raw="$1"
+    awk -F'\t' '
+        NR==FNR { cnt[$1]++; next }
+        {
+            name = $1
+            if (cnt[name] > 1) name = name ":" $2
+            print name "\t" $3 "\t" $4
+        }
+    ' <(printf '%s\n' "$packages_raw") <(printf '%s\n' "$packages_raw")
+}
+
+apt_group_size_mb() {
+    local packages="$1"
+    printf '%s\n' "$packages" | \
+        awk -F'\t' '{s+=$3}END{printf "%.1f", s/1024}' 2>/dev/null || echo "N/A"
+}
+
+write_apt_text_group() {
+    local title="$1" packages="$2" count="$3" size_mb="$4"
+    write_output "$title ($count packages, ${size_mb} MB):"
+    printf '%s\n' "$packages" | while IFS=$'\t' read -r pkg_name pkg_version pkg_size; do
+        if [[ -n "$pkg_name" ]]; then
+            write_output "  $pkg_name $pkg_version (${pkg_size:-0} KB)"
+        fi
+    done
+    write_output ""
+}
+
+write_apt_json_group() {
+    local key="$1" packages="$2" count="$3" size_mb="$4" suffix="${5:-}"
+    write_output "        \"$key\": {"
+    write_output "          \"count\": $count,"
+    write_output "          \"total_size_mb\": \"$size_mb\","
+    write_output "          \"packages\": ["
+    local first=true
+    printf '%s\n' "$packages" | while IFS=$'\t' read -r pkg_name pkg_version pkg_size; do
+        if [[ -n "$pkg_name" ]]; then
+            if [[ "$first" == true ]]; then
+                write_output "            {\"name\": \"$pkg_name\", \"version\": \"$pkg_version\", \"size_kb\": ${pkg_size:-null}}"
+                first=false
+            else
+                write_output "            ,{\"name\": \"$pkg_name\", \"version\": \"$pkg_version\", \"size_kb\": ${pkg_size:-null}}"
+            fi
+        fi
+    done
+    write_output "          ]"
+    write_output "        }$suffix"
+}
+
 # Function: Detect pip command
 detect_pip() {
     local python_cmd
@@ -507,11 +559,7 @@ main() {
     log_info "Reports will be saved to: $REPORT_DIR"
     log_info "File managers will NOT index/lock this directory (marker files created)"
     
-    if [[ "$SHOW_OS_PACKAGES" == false ]]; then
-        log_info "APT: OS base packages will be filtered out (use --show-os-packages to include them)"
-    else
-        log_info "APT: OS base packages will be included"
-    fi
+    log_info "APT: packages will be split into user-installed, system/base, and automatic dependencies"
 
     if [[ "$SHOW_UBUNTU_SNAPS" == false ]]; then
         log_info "Snap: Ubuntu/system snaps will be filtered out (use --show-ubuntu-snaps to include them)"
@@ -641,7 +689,7 @@ main() {
     fi
 
     # =========================================================================
-    # SECTION 1: APT Installed Packages (Filtered)
+    # SECTION 1: APT Installed Packages (classified)
     # =========================================================================
     local section_start
     section_start=$(start_timer)
@@ -650,38 +698,19 @@ main() {
         write_output "    \"apt\": {"
     else
         write_section "SECTION 1: APT INSTALLED PACKAGES"
-        if [[ "$SHOW_OS_PACKAGES" == false ]]; then
-            write_output "NOTE: OS base packages and auto-installed dependencies (lib*-dev, old kernel"
-            write_output "packages, etc.) are filtered out -- only packages you explicitly installed are"
-            write_output "shown. Use --show-os-packages to include them."
-            write_output ""
-        fi
+        write_output "Packages are classified as user-installed, system/base, or automatic dependencies."
+        write_output "System/base detection uses installer records and package-priority heuristics."
+        write_output ""
     fi
 
     if command_exists dpkg-query; then
         log_section "Scanning apt/dpkg packages..."
 
-        os_packages_file=""
-        manual_packages_file=""
-        if [[ "$SHOW_OS_PACKAGES" == false ]]; then
-            os_packages_file=$(get_os_packages)
-            log_verbose "OS packages file: $os_packages_file"
-            os_package_count=$(safe_count "$(cat "$os_packages_file" 2>/dev/null || true)")
-            log_verbose "Found $os_package_count OS base packages to filter"
-
-            # apt-mark distinguishes packages you actually asked for from
-            # ones apt pulled in automatically as a dependency (lib*-dev,
-            # lib*-perl transitive deps, and old kernel image/header/modules
-            # packages superseded by a newer one -- those are all "auto"
-            # once a newer kernel meta-package depends on the latest).
-            # Strip any ":arch" suffix apt-mark adds so this matches on the
-            # same bare package name used for filtering below.
-            if command_exists apt-mark; then
-                manual_packages_file="/tmp/apt_manual_packages_$$.txt"
-                apt-mark showmanual 2>/dev/null | sed 's/:.*//' | sort -u > "$manual_packages_file"
-                manual_package_count=$(safe_count "$(cat "$manual_packages_file" 2>/dev/null || true)")
-                log_verbose "Restricting to $manual_package_count manually-installed packages"
-            fi
+        os_packages_file=$(get_os_packages)
+        auto_packages_file="/tmp/apt_auto_packages_$$.txt"
+        : > "$auto_packages_file"
+        if command_exists apt-mark; then
+            apt-mark showauto 2>/dev/null | sed 's/:.*//' | sort -u > "$auto_packages_file"
         fi
 
         # Package and Architecture are kept as separate fields so a genuine
@@ -692,86 +721,48 @@ main() {
         all_packages_raw=$(dpkg-query -W -f='${Package}\t${Architecture}\t${Version}\t${Installed-Size}\n' 2>/dev/null | \
             grep -v "deinstall\|purge\|config-files" || true)
 
-        if [[ "$SHOW_OS_PACKAGES" == false ]] && [[ -f "$os_packages_file" ]]; then
-            log_verbose "Filtering out OS base packages..."
-            all_packages_raw=$(echo "$all_packages_raw" | \
-                awk -F'\t' 'NR==FNR {os[$1]=1; next} !($1 in os)' \
-                "$os_packages_file" - 2>/dev/null || echo "$all_packages_raw")
-        fi
+        system_packages_raw=$(printf '%s\n' "$all_packages_raw" | \
+            awk -F'\t' 'NR==FNR {os[$1]=1; next} ($1 in os)' \
+            "$os_packages_file" - 2>/dev/null || true)
+        non_system_packages_raw=$(printf '%s\n' "$all_packages_raw" | \
+            awk -F'\t' 'NR==FNR {os[$1]=1; next} !($1 in os)' \
+            "$os_packages_file" - 2>/dev/null || true)
+        automatic_packages_raw=$(printf '%s\n' "$non_system_packages_raw" | \
+            awk -F'\t' 'NR==FNR {auto[$1]=1; next} ($1 in auto)' \
+            "$auto_packages_file" - 2>/dev/null || true)
+        user_packages_raw=$(printf '%s\n' "$non_system_packages_raw" | \
+            awk -F'\t' 'NR==FNR {auto[$1]=1; next} !($1 in auto)' \
+            "$auto_packages_file" - 2>/dev/null || true)
 
-        if [[ "$SHOW_OS_PACKAGES" == false ]] && [[ -n "$manual_packages_file" ]] && [[ -s "$manual_packages_file" ]]; then
-            log_verbose "Filtering out auto-installed dependency packages..."
-            all_packages_raw=$(echo "$all_packages_raw" | \
-                awk -F'\t' 'NR==FNR {man[$1]=1; next} ($1 in man)' \
-                "$manual_packages_file" - 2>/dev/null || echo "$all_packages_raw")
-        fi
+        user_packages_output=$(format_apt_packages "$user_packages_raw")
+        system_packages_output=$(format_apt_packages "$system_packages_raw")
+        automatic_packages_output=$(format_apt_packages "$automatic_packages_raw")
 
-        apt_packages_output=$(awk -F'\t' '
-            NR==FNR { cnt[$1]++; next }
-            {
-                name = $1
-                if (cnt[name] > 1) name = name ":" $2
-                print name "\t" $3 "\t" $4
-            }
-        ' <(echo "$all_packages_raw") <(echo "$all_packages_raw"))
-
-        total_size=$(echo "$apt_packages_output" | \
-            awk -F'\t' '{s+=$3}END{printf "%.1f", s/1024}' 2>/dev/null || echo "N/A")
-        
-        apt_count=$(safe_count "$apt_packages_output")
+        apt_user_count=$(safe_count "$user_packages_output")
+        apt_system_count=$(safe_count "$system_packages_output")
+        apt_automatic_count=$(safe_count "$automatic_packages_output")
+        apt_count=$((apt_user_count + apt_system_count + apt_automatic_count))
+        apt_user_size=$(apt_group_size_mb "$user_packages_output")
+        apt_system_size=$(apt_group_size_mb "$system_packages_output")
+        apt_automatic_size=$(apt_group_size_mb "$automatic_packages_output")
         
         if [[ "$JSON_OUTPUT" == true ]]; then
-            write_output "      \"total_size_mb\": \"$total_size\","
             write_output "      \"count\": $apt_count,"
-            if [[ "$SHOW_OS_PACKAGES" == false ]]; then
-                write_output "      \"os_packages_filtered\": true,"
-                write_output "      \"os_package_count\": $os_package_count,"
-            fi
-            write_output "      \"packages\": ["
-            local first=true
-            echo "$apt_packages_output" | while IFS=$'\t' read -r pkg_name pkg_version pkg_size; do
-                if [[ -n "$pkg_name" ]]; then
-                    if [[ "$first" == true ]]; then
-                        write_output "        {\"name\": \"$pkg_name\", \"version\": \"$pkg_version\", \"size_kb\": ${pkg_size:-null}}"
-                        first=false
-                    else
-                        write_output "        ,{\"name\": \"$pkg_name\", \"version\": \"$pkg_version\", \"size_kb\": ${pkg_size:-null}}"
-                    fi
-                fi
-            done
-            write_output "      ]"
+            write_output "      \"classification_note\": \"System/base classification uses installer records and package-priority heuristics\","
+            write_output "      \"groups\": {"
+            write_apt_json_group "user_installed" "$user_packages_output" "$apt_user_count" "$apt_user_size" ","
+            write_apt_json_group "system_base" "$system_packages_output" "$apt_system_count" "$apt_system_size" ","
+            write_apt_json_group "automatic_dependencies" "$automatic_packages_output" "$apt_automatic_count" "$apt_automatic_size"
+            write_output "      }"
         else
-            write_output "Total installed size (user-installed): ${total_size} MB"
-            
-            if [[ "$SHOW_OS_PACKAGES" == false ]]; then
-                write_output "OS packages filtered out: $os_package_count"
-            fi
-            write_output ""
-            write_output "Installed Packages (Non-OS):"
-            echo "$apt_packages_output" | while IFS=$'\t' read -r pkg_name pkg_version pkg_size; do
-                if [[ -n "$pkg_name" ]]; then
-                    write_output "$pkg_name"
-                fi
-            done
-            write_output ""
-            write_output "Total user-installed APT packages: $apt_count"
-            
-            if [[ "$SHOW_OS_PACKAGES" == false ]] && [[ -f "$os_packages_file" ]]; then
-                write_output ""
-                write_output "--- OS BASE PACKAGES (filtered out) ---"
-                write_output "To include these, run with: --show-os-packages"
-                write_output ""
-                cat "$os_packages_file" 2>/dev/null | head -20 | while IFS= read -r pkg; do
-                    write_output "  $pkg"
-                done
-                if [[ $os_package_count -gt 20 ]]; then
-                    write_output "  ... and $((os_package_count - 20)) more"
-                fi
-                write_output ""
-            fi
+            write_apt_text_group "USER-INSTALLED PACKAGES" "$user_packages_output" "$apt_user_count" "$apt_user_size"
+            write_apt_text_group "SYSTEM/BASE PACKAGES" "$system_packages_output" "$apt_system_count" "$apt_system_size"
+            write_apt_text_group "AUTOMATIC DEPENDENCIES" "$automatic_packages_output" "$apt_automatic_count" "$apt_automatic_size"
+            write_output "Total installed APT packages: $apt_count"
         fi
         
-        log_info "Found $apt_count user-installed APT packages"
+        rm -f "$os_packages_file" "$auto_packages_file"
+        log_info "APT groups: $apt_user_count user-installed, $apt_system_count system/base, $apt_automatic_count automatic dependencies"
     else
         log_warn "dpkg-query not found - skipping APT scan"
         if [[ "$JSON_OUTPUT" == true ]]; then
@@ -1192,7 +1183,7 @@ main() {
             [[ -z "$apt_total" ]] && apt_total=0
             
             if [[ -n "${apt_count:-}" ]]; then
-                write_output "APT packages (user-installed): $apt_count (filtered from $apt_total total)"
+                write_output "APT packages: $apt_count classified ($apt_user_count user-installed, $apt_system_count system/base, $apt_automatic_count automatic dependencies; $apt_total installed total)"
             else
                 write_output "APT packages: $apt_total"
             fi
@@ -1255,7 +1246,7 @@ main() {
         
         echo ""
         log_info "Summary:"
-        [[ -n "${apt_count:-}" ]] && log_info "  APT (user-installed): $apt_count packages"
+        [[ -n "${apt_count:-}" ]] && log_info "  APT: $apt_count classified packages ($apt_user_count user-installed, $apt_system_count system/base, $apt_automatic_count automatic dependencies)"
         [[ -n "${snap_total:-}" ]] && log_info "  Snap: $snap_total packages"
         [[ -n "${flatpak_total:-}" ]] && log_info "  Flatpak: $flatpak_total packages"
         [[ -n "${npm_total:-}" ]] && log_info "  NPM: $npm_total global packages"

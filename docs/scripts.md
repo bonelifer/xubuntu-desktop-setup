@@ -76,7 +76,7 @@ One-line description of every script in the repo. Descriptions are pulled from e
 
 | Script | What it does |
 |--------|---------------|
-| `package_inventory.sh` | Inventories apt/snap/flatpak/pip/npm packages during full backup |
+| `package_inventory.sh` | Inventories apt/snap/flatpak/pip/npm packages during full backup, splitting APT into user, system/base, and dependency groups |
 | `sync-backup.sh` | Syncs an array of directories from a source drive to a destination drive via rsync |
 
 ## Shared library

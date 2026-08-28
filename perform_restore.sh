@@ -7,6 +7,8 @@
 # Most apps are restored generically via backup-restore-configs-manager.sh,
 # driven by the path list in backup-restore-configs_paths.sh -- add a new
 # app there instead of writing a new backup-restore-<app>.sh script.
+# CherryTree stays standalone because it discovers matching desktop DB files
+# at runtime.
 #
 # backup-crontab.sh and backup-fstab.sh are deliberately NOT called here --
 # both are backup-only by design (see their own headers for why): restoring
@@ -29,6 +31,7 @@ run_step() {
 }
 
 run_step bash "$SCRIPT_DIR/backup-restore-autostart.sh" --restore
+run_step bash "$SCRIPT_DIR/backup-restore-cherrytree.sh" --restore
 run_step bash "$SCRIPT_DIR/backup-restore-fonts.sh" --restore
 run_step bash "$SCRIPT_DIR/backup-restore-keepassxc.sh" --restore
 run_step bash "$SCRIPT_DIR/backup-restore-plank.sh" restore

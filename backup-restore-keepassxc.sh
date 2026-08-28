@@ -35,7 +35,7 @@ if pgrep -x "keepassxc" > /dev/null; then
     log_message "KeePassXC is running."
 
     # Check the cache directory for the KeePassXC configuration
-    CONFIG_FILE="$HOME/.cache/keepassxc/keepassxc.ini"
+    CONFIG_FILE="$HOME/.config/keepassxc/keepassxc.ini"
     
     # Check if the configuration file exists
     if [ -f "$CONFIG_FILE" ]; then

@@ -82,18 +82,6 @@ backup_installed_packages() {
     log "Installed packages list backed up to: $packages_file"
 }
 
-restore_installed_packages() {
-    if [ -f "$packages_file" ]; then
-        sudo dpkg --clear-selections
-        # shellcheck disable=SC2024 # $packages_file is user-readable; only dpkg needs root
-        sudo dpkg --set-selections <"$packages_file"
-        sudo apt-get dselect-upgrade -y
-        log "Installed packages list restored from: $packages_file"
-    else
-        log "No installed-packages backup found at $packages_file, skipping."
-    fi
-}
-
 perform_backup() {
     log "Starting backup process..."
     mkdir -p "$backup_dir"
@@ -109,7 +97,6 @@ perform_restore() {
     for config in "${software_configs[@]}"; do
         restore_config "$config"
     done
-    restore_installed_packages
     log "Restore process completed."
 }
 

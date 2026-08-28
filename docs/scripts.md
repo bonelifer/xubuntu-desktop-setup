@@ -56,7 +56,7 @@ One-line description of every script in the repo. Descriptions are pulled from e
 | `backup-fstab.sh` | Backs up `/etc/fstab` (backup-only, not auto-restored) |
 | `backup-restore-autostart.sh` | Backs up/restores user and system autostart configurations |
 | `backup-restore-cherrytree.sh` | Backs up/restores all Desktop CherryTree `.ctb` databases |
-| `backup-restore-configs-manager.sh` | Generic backup/restore engine, driven by `backup-restore-configs_paths.sh` |
+| `backup-restore-configs-manager.sh` | Generic config backup/restore engine; also creates an APT selection list for personal review |
 | `backup-restore-configs_paths.sh` | Manifest of config file/directory paths for the generic backup/restore engine |
 | `backup-restore-fonts.sh` | Backs up/restores hand-installed font files |
 | `backup-restore-keepassxc.sh` | Backs up/restores the last active KeePassXC database, falling back to all Desktop `.kdbx` files |

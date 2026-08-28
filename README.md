@@ -34,6 +34,10 @@ Personal provisioning toolkit for a Xubuntu/XFCE desktop: install software, then
 ./perform_restore.sh    # restore everything, on the new install
 ```
 
+`perform_backup.sh` also creates `backup/installed_packages.txt` as a personal
+APT package-selection reference. It is not used by automatic restore and is not
+an install-ready package list.
+
 Most application config is backed up generically via `backup-restore-configs-manager.sh`, driven by the path list in `backup-restore-configs_paths.sh` — add a new app there instead of writing a dedicated script. A handful of scripts stay standalone because they need real logic (dconf dumps, gsettings, a dynamically-resolved path, or a live command's output instead of a file) — see the header comments in `perform_backup.sh` and `perform_restore.sh` for the current list.
 
 `backup-crontab.sh` and `backup-fstab.sh` are backup-only by design: restoring an old crontab or fstab over a live one risks silently reverting changes made since the backup, so those are left to manual review rather than automatic restore.

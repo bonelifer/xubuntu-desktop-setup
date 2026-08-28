@@ -8,11 +8,9 @@
 #
 # Usage: ./apply-theme.sh
 #
-# This is a manual, standalone tool, runnable on its own. For themes with no
-# resolved apt package (hand-installed themes), make sure their files are
-# already restored to ~/.themes / ~/.icons (e.g. via
-# backup-restore-configs-manager.sh -r) before running this, or the theme
-# name will be set but Xfce will have nothing on disk to render it with.
+# perform_restore.sh runs this automatically after restoring ~/.themes and
+# ~/.icons. It can also be run on its own; when doing so, restore hand-installed
+# theme files first or Xfce will have nothing on disk to render them with.
 
 set -uo pipefail
 

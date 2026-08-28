@@ -8,9 +8,9 @@
 #
 # Usage: ./detect-theme.sh
 #
-# This is a manual, standalone tool -- it is not run automatically by
-# perform_backup.sh. Run it whenever you want to snapshot the current theme;
-# apply-theme.sh consumes backup/theme.conf to replay it on another machine.
+# perform_backup.sh runs this automatically. It can also be run on its own
+# whenever you want to refresh the theme snapshot; apply-theme.sh consumes
+# backup/theme.conf to replay it on another machine.
 
 set -uo pipefail
 

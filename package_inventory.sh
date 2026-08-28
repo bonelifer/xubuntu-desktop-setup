@@ -8,7 +8,7 @@
 #          Filters out OS base packages for APT section
 #          Prevents file manager lockups with .nopreview marker files
 # Outputs: Results saved to a dedicated directory (not in current folder)
-# Usage: ./inventory.sh [--classic-only] [--verbose] [--dry-run] [--json] [--show-os-packages] [--help]
+# Usage: ./package_inventory.sh [--classic-only] [--verbose] [--dry-run] [--json] [--show-os-packages] [--help]
 # =============================================================================
 
 set -euo pipefail
@@ -17,8 +17,10 @@ set -euo pipefail
 # Configuration - PREVENT FILE MANAGER LOCKUP
 # =============================================================================
 
-# Use a dedicated directory, alongside this repo's other backup output
-REPORT_DIR="./backup/.system_reports"  # Hidden directory (dot prefix)
+# Use a dedicated directory alongside this repo's other backup output,
+# regardless of the directory from which this script is launched.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPORT_DIR="$SCRIPT_DIR/backup/.system_reports"  # Hidden directory (dot prefix)
 
 # Create the directory if it doesn't exist
 mkdir -p "$REPORT_DIR" 2>/dev/null || {

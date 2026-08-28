@@ -9,6 +9,7 @@
 # app there instead of writing a new backup-restore-<app>.sh script.
 # CherryTree stays standalone because it discovers matching desktop DB files
 # at runtime.
+# Personal data stays standalone because it uses a separate backup root.
 #
 # backup-crontab.sh and backup-fstab.sh are deliberately NOT called here --
 # both are backup-only by design (see their own headers for why): restoring
@@ -34,6 +35,7 @@ run_step bash "$SCRIPT_DIR/backup-restore-autostart.sh" --restore
 run_step bash "$SCRIPT_DIR/backup-restore-cherrytree.sh" --restore
 run_step bash "$SCRIPT_DIR/backup-restore-fonts.sh" --restore
 run_step bash "$SCRIPT_DIR/backup-restore-keepassxc.sh" --restore
+run_step bash "$SCRIPT_DIR/backup-restore-personal-data.sh" --restore
 run_step bash "$SCRIPT_DIR/backup-restore-plank.sh" restore
 run_step bash "$SCRIPT_DIR/backup-restore-trackpoint_touchpad_sensitivity.sh" --load
 run_step bash "$SCRIPT_DIR/backup-restore-configs-manager.sh" --restore

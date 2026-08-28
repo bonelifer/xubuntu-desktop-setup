@@ -17,6 +17,8 @@
 #     auto-restored (see its own header for why)
 #   - backup-restore-fonts.sh: mirrors hand-installed font directories
 #   - backup-restore-keepassxc.sh: resolves a dynamic DB path at runtime
+#   - backup-restore-personal-data.sh: copies selected home directories to a
+#     separate personal-data backup root
 #   - backup-wifi.sh: reads NetworkManager connection files under /etc,
 #     not $HOME; backup only, not auto-restored (see its own header for why)
 #   - backup-restore-plank.sh: dconf dump, not a file
@@ -43,6 +45,7 @@ run_step bash "$SCRIPT_DIR/backup-fstab.sh" --backup
 run_step bash "$SCRIPT_DIR/backup-restore-fonts.sh" --backup
 run_step bash "$SCRIPT_DIR/backup-wifi.sh" --backup
 run_step bash "$SCRIPT_DIR/backup-restore-keepassxc.sh" --backup
+run_step bash "$SCRIPT_DIR/backup-restore-personal-data.sh" --backup
 run_step bash "$SCRIPT_DIR/backup-restore-plank.sh" dump
 run_step bash "$SCRIPT_DIR/backup-restore-trackpoint_touchpad_sensitivity.sh" --dump
 run_step bash "$SCRIPT_DIR/backup-restore-configs-manager.sh" --backup

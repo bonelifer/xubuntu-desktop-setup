@@ -46,7 +46,13 @@ software_configs=(
     "$HOME/.config/xfce4"                          # Xfce4 desktop environment settings
 
     # Absorbed from backup-restore-persona-settings.sh:
-    "$HOME/.ssh/config"                            # SSH client config
+    "$HOME/.ssh"                                   # SSH config, keys, and authorized keys
+    "$HOME/.gnupg"                                 # GnuPG keys and configuration
+    "$HOME/.password-store"                        # pass password store
+    "$HOME/.local/share/keyrings"                  # GNOME Keyring data
+    "$HOME/.local/share/kwalletd"                  # KDE Wallet data
+    "$HOME/.config/systemd/user"                   # User services and timers
+    "$HOME/.local/share/applications"              # Custom desktop launchers
     "$HOME/.bashrc"                                # Bash rc
     "$HOME/.bash_aliases"                          # Bash aliases
     "$HOME/.bash_history"                          # Bash history

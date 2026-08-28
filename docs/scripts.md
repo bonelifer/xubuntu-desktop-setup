@@ -7,7 +7,7 @@ One-line description of every script in the repo. Descriptions are pulled from e
 | Script | What it does |
 |--------|---------------|
 | `install-main.sh` | Orchestrates full system setup: repos/PPAs, packages from `packages.conf`, core `install-*.sh` modules, and optional `--with-<name>` modules |
-| `perform_backup.sh` | Runs every `backup-restore-*.sh` script in `--backup` mode |
+| `perform_backup.sh` | Runs all backup steps, theme detection, and package inventory |
 | `perform_restore.sh` | Runs every restore-capable `backup-restore-*.sh` script in restore mode |
 
 ## Install scripts
@@ -55,10 +55,12 @@ One-line description of every script in the repo. Descriptions are pulled from e
 | `backup-crontab.sh` | Backs up user and system crontab entries (backup-only, not auto-restored) |
 | `backup-fstab.sh` | Backs up `/etc/fstab` (backup-only, not auto-restored) |
 | `backup-restore-autostart.sh` | Backs up/restores user and system autostart configurations |
+| `backup-restore-cherrytree.sh` | Backs up/restores all Desktop CherryTree `.ctb` databases |
 | `backup-restore-configs-manager.sh` | Generic backup/restore engine, driven by `backup-restore-configs_paths.sh` |
 | `backup-restore-configs_paths.sh` | Manifest of config file/directory paths for the generic backup/restore engine |
 | `backup-restore-fonts.sh` | Backs up/restores hand-installed font files |
-| `backup-restore-keepassxc.sh` | Backs up/restores the last-opened KeePassXC database |
+| `backup-restore-keepassxc.sh` | Backs up/restores the last active KeePassXC database, falling back to all Desktop `.kdbx` files |
+| `backup-restore-personal-data.sh` | Backs up/restores selected home directories through the separate `personal-data/` root |
 | `backup-restore-plank.sh` | Dumps/restores Plank dock settings via dconf |
 | `backup-restore-trackpoint_touchpad_sensitivity.sh` | Dumps/restores touchpad, TrackPoint, and mouse peripheral settings via dconf |
 | `backup-wifi.sh` | Backs up saved WiFi network names and PSKs from NetworkManager (backup-only, not auto-restored) |
@@ -67,14 +69,14 @@ One-line description of every script in the repo. Descriptions are pulled from e
 
 | Script | What it does |
 |--------|---------------|
-| `detect-theme.sh` | Detects the current Xfce theme/style and saves a snapshot |
-| `apply-theme.sh` | Replays a theme snapshot produced by `detect-theme.sh` |
+| `detect-theme.sh` | Detects the current Xfce theme/style during full backup and saves a snapshot |
+| `apply-theme.sh` | Replays the saved theme after a full restore |
 
 ## Inventory & sync
 
 | Script | What it does |
 |--------|---------------|
-| `package_inventory.sh` | Lists installed apt/snap/flatpak/pip/npm packages, filtered to user-installed ones |
+| `package_inventory.sh` | Inventories apt/snap/flatpak/pip/npm packages during full backup |
 | `sync-backup.sh` | Syncs an array of directories from a source drive to a destination drive via rsync |
 
 ## Shared library

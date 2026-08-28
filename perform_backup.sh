@@ -10,6 +10,7 @@
 # These stay as standalone scripts because they don't just copy a static
 # file/directory:
 #   - backup-restore-autostart.sh: needs sudo for /etc/xdg/autostart
+#   - backup-restore-cherrytree.sh: resolves matching desktop DB files at runtime
 #   - backup-crontab.sh: reads via the `crontab` command, not files; backup
 #     only, not auto-restored (see its own header for why)
 #   - backup-fstab.sh: system file under /etc, not $HOME; backup only, not
@@ -36,6 +37,7 @@ run_step() {
 }
 
 run_step bash "$SCRIPT_DIR/backup-restore-autostart.sh" --backup
+run_step bash "$SCRIPT_DIR/backup-restore-cherrytree.sh" --backup
 run_step bash "$SCRIPT_DIR/backup-crontab.sh" --backup
 run_step bash "$SCRIPT_DIR/backup-fstab.sh" --backup
 run_step bash "$SCRIPT_DIR/backup-restore-fonts.sh" --backup

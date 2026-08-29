@@ -45,6 +45,9 @@ software_configs=(
     "$HOME/.config/cherrytree"                     # Cherrytree note-taking app config
     "$HOME/.config/acsm-get"                       # acsm-get config
     "$HOME/.config/xfce4"                          # Xfce4 desktop environment settings
+    "$HOME/.xmltv"                                 # XMLTV configuration and data
+    "$HOME/.imapfilter"                            # IMAPFilter configuration
+    "$HOME/.filebot"                               # FileBot configuration and data
 
     # Absorbed from backup-restore-persona-settings.sh:
     "$HOME/.ssh"                                   # SSH config, keys, and authorized keys
@@ -59,6 +62,7 @@ software_configs=(
     "$HOME/.bash_history"                          # Bash history
     "$HOME/.bash_profile"                          # Bash profile
     "$HOME/.bash_login"                            # Bash login
+    "$HOME/Applications"                           # User-installed applications
     "$HOME/bin"                                    # Custom scripts/binaries
 
     # Absorbed from backup-restore-misc.sh:

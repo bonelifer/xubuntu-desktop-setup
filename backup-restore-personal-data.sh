@@ -20,6 +20,7 @@ personal_dirs=(
     "Downloads"
     "EBOOKS"
     "Calibre Library"
+    "CODE"
     "Pictures"
     "Videos"
     "Music"

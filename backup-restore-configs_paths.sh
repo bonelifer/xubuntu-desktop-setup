@@ -59,6 +59,7 @@ software_configs=(
     "$HOME/.bash_history"                          # Bash history
     "$HOME/.bash_profile"                          # Bash profile
     "$HOME/.bash_login"                            # Bash login
+    "$HOME/Applications"                           # User-installed applications
     "$HOME/bin"                                    # Custom scripts/binaries
 
     # Absorbed from backup-restore-misc.sh:

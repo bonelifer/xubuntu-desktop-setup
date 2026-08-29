@@ -21,9 +21,23 @@ personal_dirs=(
     "EBOOKS"
     "Calibre Library"
     "CODE"
+    "MESSAGES"
+    "Patiobar"
     "Pictures"
+    "projects"
     "Videos"
     "Music"
+    "Worktree"
+)
+personal_files=(
+    ".gist"
+    ".googledrive.conf"
+    ".my.cnf"
+    ".netrc"
+    ".pgpass"
+    "audac.sh"
+    "favicon.ico"
+    "Willie Nelson-audio.zip"
 )
 
 backup_personal_data() {
@@ -44,6 +58,20 @@ backup_personal_data() {
             log "Personal data directory not found, skipping: $source_dir"
         fi
     done
+
+    for name in "${personal_files[@]}"; do
+        source_dir="$HOME/$name"
+        destination_dir="$personal_data_dir/$name"
+        if [ -f "$source_dir" ]; then
+            if rsync -a "$source_dir" "$destination_dir"; then
+                log "Personal data file backed up: $source_dir"
+            else
+                log_error "Failed to back up personal data file: $source_dir"
+            fi
+        else
+            log "Personal data file not found, skipping: $source_dir"
+        fi
+    done
 }
 
 restore_personal_data() {
@@ -61,6 +89,20 @@ restore_personal_data() {
             fi
         else
             log "Personal data backup not found, skipping: $source_dir"
+        fi
+    done
+
+    for name in "${personal_files[@]}"; do
+        source_dir="$personal_data_dir/$name"
+        destination_dir="$HOME/$name"
+        if [ -f "$source_dir" ]; then
+            if rsync -a "$source_dir" "$destination_dir"; then
+                log "Personal data file restored: $destination_dir"
+            else
+                log_error "Failed to restore personal data file: $destination_dir"
+            fi
+        else
+            log "Personal data file backup not found, skipping: $source_dir"
         fi
     done
 }

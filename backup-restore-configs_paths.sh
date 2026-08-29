@@ -29,6 +29,7 @@ software_configs=(
     "$HOME/.config/starship.toml"                  # Starship prompt config
     "$HOME/.config/world_clock_plugin@hanzala123/" # World clock plugin config
     "$HOME/.config/Thunar"                         # Thunar file manager config
+    "$HOME/thunar-actions"                         # Thunar custom action scripts
     "$HOME/.config/streamrip"                      # Streamrip config
     "$HOME/.config/spicetify"                      # Spicetify config
     "$HOME/.config/solaar"                         # Solaar config

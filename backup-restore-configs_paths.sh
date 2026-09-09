@@ -116,6 +116,16 @@ software_configs=(
     "$HOME/.config/libvirt"                        # libvirt client config
     "$HOME/.config/virt-manager"                   # virt-manager config
 
+    # AI coding/chat desktop apps
+    "$HOME/.claude"                                # Claude Code CLI config, memory, and session data
+    "$HOME/.claude.json"                           # Claude Code CLI global state file
+    "$HOME/.config/Claude"                         # Claude Desktop app config
+    # ChatGPT desktop is OpenAI's Electron app (internal product name "Codex");
+    # userData dir name isn't confirmed on Linux, so both candidates are
+    # listed -- the backup engine skips whichever doesn't exist.
+    "$HOME/.config/ChatGPT"                        # ChatGPT desktop app config
+    "$HOME/.config/Codex"                          # ChatGPT desktop app config (alternate userData dir name)
+
     # Add more paths as needed
 )
 

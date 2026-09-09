@@ -22,6 +22,9 @@ One-line description of every script in the repo. Descriptions are pulled from e
 | `install-applauncher.sh` | Installs AppImageLauncher via its PPA |
 | `install-apt-select-mirror.sh` | Automates selecting and updating the fastest apt mirror |
 | `install-atuin.sh` | Installs Atuin (shell history sync/search) via its official installer |
+| `install-chatgpt.sh` | Installs the ChatGPT desktop app from OpenAI's official `.deb` |
+| `install-claude-code.sh` | Installs the Claude Code CLI via Anthropic's official installer |
+| `install-claude-desktop.sh` | Installs Claude Desktop via Anthropic's official apt repo |
 | `install-communications.sh` | Installs Zoom and Discord via direct `.deb` download |
 | `install-docker.sh` | Installs Docker CE on Ubuntu 22.04 |
 | `install-drill-search.sh` | Installs and integrates the Drill Search AppImage with AppImageLauncher |

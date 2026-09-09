@@ -60,6 +60,10 @@ See [docs/scripts.md](docs/scripts.md) for a one-line description of every scrip
 
 - Code review, bug fixes, and documentation assisted by [Claude](https://www.anthropic.com/claude).
 
+## TODO
+
+Ideas not yet built, practical and speculative alike: [`docs/TODO.md`](docs/TODO.md).
+
 ## Contributing
 
 Contributions are welcome!

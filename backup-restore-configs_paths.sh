@@ -40,6 +40,8 @@ software_configs=(
     "$HOME/.config/mpd"                            # MPD (Music Player Daemon) config
     "$HOME/.config/keepassxc"                      # KeePassXC config
     "$HOME/.config/GitHub Desktop"                 # GitHub Desktop config
+    "$HOME/.github-activity-checker"               # GitHub activity checker data
+    "$HOME/.github-org-checker"                    # GitHub organization checker data
     "$HOME/.config/ghostwriter"                    # Ghostwriter config
     "$HOME/.config/cod-ibroadcast/"                # cod-ibroadcast config
     "$HOME/.config/cherrytree"                     # Cherrytree note-taking app config

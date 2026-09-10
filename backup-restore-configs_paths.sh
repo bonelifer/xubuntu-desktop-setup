@@ -122,6 +122,7 @@ software_configs=(
     "$HOME/.claude"                                # Claude Code CLI config, memory, and session data
     "$HOME/.claude.json"                           # Claude Code CLI global state file
     "$HOME/.config/Claude"                         # Claude Desktop app config
+    "$HOME/.marm"                                  # marm-memory MCP server database, index, and logs
     # ChatGPT desktop is OpenAI's Electron app (internal product name "Codex");
     # userData dir name isn't confirmed on Linux, so both candidates are
     # listed -- the backup engine skips whichever doesn't exist.

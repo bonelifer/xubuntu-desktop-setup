@@ -50,6 +50,8 @@ software_configs=(
     "$HOME/.xmltv"                                 # XMLTV configuration and data
     "$HOME/.imapfilter"                            # IMAPFilter configuration
     "$HOME/.filebot"                               # FileBot configuration and data
+    "$HOME/.MakeMKV"                               # MakeMKV settings, screen, and update config
+    "$HOME/.genssl"                                # genssl.sh optional per-user config override
 
     # Absorbed from backup-restore-persona-settings.sh:
     "$HOME/.ssh"                                   # SSH config, keys, and authorized keys
